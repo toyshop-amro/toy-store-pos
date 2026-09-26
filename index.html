@@ -16,6 +16,7 @@
     .nav-tabs { display: flex; gap: 8px; margin-bottom: 15px; border-bottom: 2px solid #eee; overflow-x: auto; padding-bottom: 8px; }
     .nav-tab { padding: 10px 16px; background: #e9ecef; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; color: #495057; white-space: nowrap; }
     .nav-tab.active { background: #27ae60; color: white; }
+    .nav-tab.admin-only { border: 1px dashed #e74c3c; }
     
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -25,7 +26,7 @@
     .product-card:active { transform: scale(0.97); }
     .product-card img { width: 100%; height: 75px; object-fit: cover; border-radius: 6px; margin-bottom: 5px; }
     .product-card .title { font-size: 12px; font-weight: bold; color: #333; margin-bottom: 3px; }
-    .product-card .cost-price { font-size: 11px; color: #7f8c8d; }
+    .product-card .sell-price { font-size: 12px; color: #27ae60; font-weight: bold; }
 
     .form-group { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 8px; }
     input, select, button { padding: 9px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 13px; }
@@ -56,9 +57,9 @@
 
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="openTab(event, 'pos')">🛒 الكاشير والمبيعات</button>
-    <button class="nav-tab" onclick="openTab(event, 'inventory')">📦 المخزن والجملة</button>
-    <button class="nav-tab" onclick="openTab(event, 'reports')">📊 التقارير والأرباح</button>
-    <button class="nav-tab" onclick="openTab(event, 'employees')">👥 الموظفين</button>
+    <button class="nav-tab admin-only" onclick="openProtectedTab(event, 'inventory')">📦 المخزن والجملة 🔒</button>
+    <button class="nav-tab admin-only" onclick="openProtectedTab(event, 'reports')">📊 التقارير والأرباح 🔒</button>
+    <button class="nav-tab admin-only" onclick="openProtectedTab(event, 'employees')">👥 الموظفين 🔒</button>
   </div>
 
   <!-- قسم الكاشير -->
@@ -71,7 +72,7 @@
     <h3>الفاتورة الحالية</h3>
     <table>
       <thead>
-        <tr><th>الصورة</th><th>الصنف</th><th>سعر التكلفة</th><th>سعر البيع</th><th>الكمية</th><th>الإجمالي</th><th>إجراء</th></tr>
+        <tr><th>الصورة</th><th>الصنف</th><th>سعر البيع</th><th>الكمية</th><th>الإجمالي</th><th>إجراء</th></tr>
       </thead>
       <tbody id="cartTable"></tbody>
     </table>
@@ -204,6 +205,10 @@
   let cart = [];
   let salesHistory = [];
   let employees = [];
+  
+  // كلمة سر المدير المقترحة (يمكنك تغييرها من هنا)
+  const ADMIN_PASSWORD = "1234";
+  let isAdminAuthenticated = false;
 
   function openTab(evt, tabName) {
     let tabcontent = document.getElementsByClassName("tab-content");
@@ -212,6 +217,21 @@
     for (let i = 0; i < tablinks.length; i++) tablinks[i].className = tablinks[i].className.replace(" active", "");
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.className += " active";
+  }
+
+  function openProtectedTab(evt, tabName) {
+    if (isAdminAuthenticated) {
+      openTab(evt, tabName);
+    } else {
+      let pwd = prompt("🔐 دخل كلمة السر للوصول لإعدادات المدير:");
+      if (pwd === ADMIN_PASSWORD) {
+        isAdminAuthenticated = true;
+        alert("تم تأكيد كلمة السر بنجاح!");
+        openTab(evt, tabName);
+      } else {
+        alert("❌ كلمة السر غير صحيحة!");
+      }
+    }
   }
 
   // --- الكاشير ---
@@ -227,7 +247,7 @@
         <div class="product-card" onclick="selectProductToCart('${prod.firebaseId}')">
           <img src="${prod.img || 'https://via.placeholder.com/80?text=🧸'}">
           <div class="title">${prod.name}</div>
-          <div class="cost-price">جملة: ${prod.cost} ج.م</div>
+          <div class="sell-price">${prod.sell} ج.م</div>
         </div>
       `;
     });
@@ -237,7 +257,7 @@
     const prod = inventory.find(p => p.firebaseId === firebaseId);
     if(!prod) return;
 
-    let sellPrice = prompt(`سعر البيع لـ (${prod.name}):`, prod.sell);
+    let sellPrice = prompt(`تأكيد سعر البيع لـ (${prod.name}):`, prod.sell);
     if (sellPrice === null || sellPrice === "") return;
     sellPrice = parseFloat(sellPrice);
 
@@ -271,7 +291,6 @@
         <tr>
           <td><img src="${item.img}" class="cart-img"></td>
           <td>${item.name}</td>
-          <td>${item.cost} ج.م</td>
           <td>${item.sell} ج.م</td>
           <td>${item.qty}</td>
           <td>${total.toFixed(2)} ج.م</td>
@@ -407,7 +426,7 @@
 
     document.getElementById('statSales').innerText = salesSum.toFixed(2) + ' ج.م';
     document.getElementById('statCost').innerText = costSum.toFixed(2) + ' ج.م';
-    document.getElementById('statProfit').innerText = profitSum.toFixed(2) + ' ج.m';
+    document.getElementById('statProfit').innerText = profitSum.toFixed(2) + ' ج.م';
     document.getElementById('statOrders').innerText = salesHistory.length;
   }
 
@@ -441,4 +460,4 @@
 </script>
 
 </body>
-          </html>
+</html>
