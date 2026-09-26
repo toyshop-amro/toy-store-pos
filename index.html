@@ -5,459 +5,471 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نظام كاشير متجر الألعاب السحابي</title>
   <style>
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-    body { background-color: #f0f2f5; margin: 0; padding: 10px; direction: rtl; }
-    .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    h1 { text-align: center; color: #2c3e50; font-size: 20px; margin-bottom: 15px; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+    body { background-color: #f0f2f5; padding: 15px; color: #333; }
+    .container { max-width: 1100px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #1a73e8; margin-bottom: 15px; font-size: 24px; }
     
-    .status-bar { text-align: center; padding: 6px; font-size: 12px; border-radius: 6px; margin-bottom: 12px; font-weight: bold; }
-    .status-online { background-color: #d4edda; color: #155724; }
-    
-    .nav-tabs { display: flex; gap: 8px; margin-bottom: 15px; border-bottom: 2px solid #eee; overflow-x: auto; padding-bottom: 8px; }
-    .nav-tab { padding: 10px 16px; background: #e9ecef; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; color: #495057; white-space: nowrap; }
-    .nav-tab.active { background: #27ae60; color: white; }
-    .nav-tab.admin-only { border: 1px dashed #e74c3c; }
-    
+    .status-bar { text-align: center; padding: 8px; margin-bottom: 15px; border-radius: 6px; font-weight: bold; font-size: 14px; }
+    .status-online { background-color: #e6f4ea; color: #137333; }
+    .status-offline { background-color: #fce8e6; color: #c5221f; }
+
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; overflow-x: auto; }
+    .nav-tab { padding: 10px 18px; background: #e4e6eb; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; transition: 0.2s; }
+    .nav-tab.active { background: #1a73e8; color: white; }
+    .nav-tab.admin-only { border: 2px dashed #f9ab00; }
+
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 20px; max-height: 320px; overflow-y: auto; padding: 5px; border: 1px solid #ddd; border-radius: 8px; }
-    .product-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; background: #fff; transition: transform 0.1s; }
-    .product-card:active { transform: scale(0.97); }
-    .product-card img { width: 100%; height: 75px; object-fit: cover; border-radius: 6px; margin-bottom: 5px; }
-    .product-card .title { font-size: 12px; font-weight: bold; color: #333; margin-bottom: 3px; }
-    .product-card .sell-price { font-size: 12px; color: #27ae60; font-weight: bold; }
+    .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+    @media (max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
 
-    .form-group { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 8px; }
-    input, select, button { padding: 9px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 13px; }
-    input, select { flex: 1; min-width: 120px; }
-    button { background-color: #27ae60; color: white; border: none; cursor: pointer; font-weight: bold; }
-    button:hover { opacity: 0.9; }
-    
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
-    th, td { border: 1px solid #dee2e6; padding: 8px; text-align: center; vertical-align: middle; }
-    th { background-color: #34495e; color: white; font-weight: 600; }
-    .cart-img { width: 45px; height: 45px; object-fit: cover; border-radius: 5px; }
-    
-    .total-box { font-size: 18px; font-weight: bold; text-align: left; margin-top: 15px; color: #c0392b; background: #fdf2f2; padding: 10px; border-radius: 6px; }
-    .btn-danger { background-color: #e74c3c; }
-    .btn-primary { background-color: #2980b9; }
+    .card { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dadce0; margin-bottom: 15px; }
+    .card h3 { margin-bottom: 12px; color: #3c4043; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
 
-    .summary-cards { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
-    .card-stat { flex: 1; min-width: 130px; background: #f8f9fa; padding: 12px; border-radius: 8px; text-align: center; border-top: 4px solid #27ae60; }
-    .card-stat h4 { margin: 0 0 5px 0; color: #6c757d; font-size: 12px; }
-    .card-stat p { margin: 0; font-size: 16px; font-weight: bold; color: #2c3e50; }
+    .form-group { margin-bottom: 12px; }
+    .form-group label { display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+
+    .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn-primary { background: #1a73e8; color: white; }
+    .btn-success { background: #34a853; color: white; }
+    .btn-danger { background: #ea4335; color: white; margin-top: 5px; }
+    .btn-warning { background: #f9ab00; color: white; }
+
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; padding: 5px; }
+    .product-item { background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px; text-align: center; cursor: pointer; transition: 0.2s; }
+    .product-item:hover { border-color: #1a73e8; transform: translateY(-2px); }
+    .product-item .name { font-weight: bold; margin-bottom: 5px; font-size: 14px; }
+    .product-item .price { color: #137333; font-weight: bold; font-size: 13px; }
+    .product-item .stock { font-size: 11px; color: #70757a; }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 14px; }
+    th, td { border: 1px solid #dadce0; padding: 8px; text-align: center; }
+    th { background: #f1f3f4; }
+
+    .pin-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
+    .pin-box { background: white; padding: 25px; border-radius: 12px; width: 300px; text-align: center; }
   </style>
+
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 </head>
 <body>
 
 <div class="container">
-  <h1>🧸 نظام إدارة متجر الألعاب (متزامن)</h1>
-  <div id="statusBar" class="status-bar status-online">⚡ متصل بالسيرفر السحابي - متزامن بين الأجهزة</div>
+  <h1>🧸 نظام كاشير متجر الألعاب</h1>
+  <div id="statusBar" class="status-bar status-online">⚡ اتصال مباشر بالسيرفر السحابي</div>
 
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="openTab(event, 'pos')">🛒 الكاشير والمبيعات</button>
-    <button class="nav-tab admin-only" onclick="openProtectedTab(event, 'inventory')">📦 المخزن والجملة 🔒</button>
-    <button class="nav-tab admin-only" onclick="openProtectedTab(event, 'reports')">📊 التقارير والأرباح 🔒</button>
-    <button class="nav-tab admin-only" onclick="openProtectedTab(event, 'employees')">👥 الموظفين 🔒</button>
+    <button class="nav-tab active" onclick="switchTab('pos')">🛒 الكاشير (البيع)</button>
+    <button class="nav-tab admin-only" onclick="checkPinAndSwitch('inventory')">📦 المخزن والمنتجات 🔒</button>
+    <button class="nav-tab admin-only" onclick="checkPinAndSwitch('expenses')">💸 المصروفات 🔒</button>
+    <button class="nav-tab admin-only" onclick="checkPinAndSwitch('reports')">📊 التقارير والأرباح 🔒</button>
   </div>
 
-  <!-- قسم الكاشير -->
-  <div id="pos" class="tab-content active">
-    <h3>اختر المنتج للبيع:</h3>
-    <div class="products-grid" id="posProductsGrid">
-      <p style="grid-column: 1/-1; text-align:center;">جاري تحميل الأصناف...</p>
-    </div>
+  <!-- TAB 1: POS (الكاشير) -->
+  <div id="posTab" class="tab-content active">
+    <div class="grid-layout">
+      <div class="card">
+        <h3>قائمة المنتجات (إضغط للإضافة)</h3>
+        <div id="productGrid" class="product-grid">
+          <p style="text-align: center; grid-column: 1/-1;">جاري تحميل المنتجات...</p>
+        </div>
+      </div>
 
-    <h3>الفاتورة الحالية</h3>
-    <table>
-      <thead>
-        <tr><th>الصورة</th><th>الصنف</th><th>سعر البيع</th><th>الكمية</th><th>الإجمالي</th><th>إجراء</th></tr>
-      </thead>
-      <tbody id="cartTable"></tbody>
-    </table>
-    
-    <div class="total-box">إجمالي الفاتورة: <span id="grandTotal">0.00</span> ج.م</div>
-    <br>
-    <button onclick="checkoutCart()" class="btn-primary" style="font-size: 15px; padding: 12px 20px;">✅ حفظ وإتمام البيع</button>
-    <button onclick="clearCart()" class="btn-danger">إلغاء الفاتورة</button>
+      <div class="card">
+        <h3>سلة الشراء الحالية</h3>
+        <table>
+          <thead>
+            <tr><th>المنتج</th><th>العدد</th><th>السعر</th><th>الإجمالي</th><th>حذف</th></tr>
+          </thead>
+          <tbody id="cartBody"></tbody>
+        </table>
+        <div style="margin-top: 15px; font-size: 18px; font-weight: bold; text-align: space-between; display: flex; justify-content: space-between;">
+          <span>الإجمالي الكلي:</span>
+          <span id="cartTotal" style="color: #137333;">0 ج.م</span>
+        </div>
+        <button class="btn btn-success" style="margin-top: 15px;" onclick="checkout()">إتمام عملية البيع 🧾</button>
+      </div>
+    </div>
   </div>
 
-  <!-- قسم المخزن -->
-  <div id="inventory" class="tab-content">
-    <h3>إضافة صنف جديد للمخزن</h3>
-    <div class="form-group">
-      <input type="text" id="prodName" placeholder="اسم المنتج/اللعبة">
-      <input type="number" id="prodCost" placeholder="سعر الجملة (التكلفة عليك)">
-      <input type="number" id="prodSell" placeholder="سعر البيع المقترح">
-      <input type="number" id="prodStock" placeholder="الكمية المتاحة">
-      <label style="font-size:12px;">الصورة:</label>
-      <input type="file" id="prodImg" accept="image/*" style="flex:none; width: 160px;">
-      <button onclick="addInventoryProduct()">إضافة للمخزن</button>
+  <!-- TAB 2: INVENTORY (المخزن) -->
+  <div id="inventoryTab" class="tab-content">
+    <div class="card">
+      <h3>إضافة / تعديل منتج بالمخزن</h3>
+      <div class="grid-layout">
+        <div class="form-group"><label>اسم اللعبة/المنتج</label><input type="text" id="pName" placeholder="مثال: عروسة باربي"></div>
+        <div class="form-group"><label>سعر الشراء (التكلفة)</label><input type="number" id="pCost" placeholder="50"></div>
+        <div class="form-group"><label>سعر البيع</label><input type="number" id="pPrice" placeholder="80"></div>
+        <div class="form-group"><label>الكمية المتوفرة</label><input type="number" id="pStock" placeholder="10"></div>
+      </div>
+      <button class="btn btn-primary" onclick="addProduct()">حفظ المنتج بالمخزن 💾</button>
     </div>
 
-    <h3>الأصناف المسجلة بالمخزن</h3>
-    <table>
-      <thead>
-        <tr><th>الصورة</th><th>المنتج</th><th>سعر الجملة</th><th>سعر البيع المقترح</th><th>المخزون</th><th>إجراء</th></tr>
-      </thead>
-      <tbody id="inventoryTable"></tbody>
-    </table>
+    <div class="card">
+      <h3>المنتجات المسجلة بالمخزن</h3>
+      <table>
+        <thead>
+          <tr><th>الاسم</th><th>التكلفة</th><th>سعر البيع</th><th>الكمية</th><th>إجراء</th></tr>
+        </thead>
+        <tbody id="inventoryBody"></tbody>
+      </table>
+    </div>
   </div>
 
-  <!-- قسم التقارير -->
-  <div id="reports" class="tab-content">
-    <h3>ملخص حركة المبيعات</h3>
-    <div class="summary-cards">
-      <div class="card-stat">
-        <h4>إجمالي المبيعات</h4>
-        <p id="statSales">0.00 ج.م</p>
+  <!-- TAB 3: EXPENSES (المصروفات) -->
+  <div id="expensesTab" class="tab-content">
+    <div class="card">
+      <h3>تسجيل مصروف جديد</h3>
+      <div class="grid-layout">
+        <div class="form-group"><label>بند المصروف</label><input type="text" id="expTitle" placeholder="مثال: إيجار، كهرباء، أكياس"></div>
+        <div class="form-group"><label>المبلغ (ج.م)</label><input type="number" id="expAmount" placeholder="100"></div>
       </div>
-      <div class="card-stat">
-        <h4>إجمالي التكلفة (الجملة)</h4>
-        <p id="statCost">0.00 ج.م</p>
-      </div>
-      <div class="card-stat" style="border-top-color: #27ae60;">
-        <h4>صافي الربح</h4>
-        <p id="statProfit">0.00 ج.م</p>
-      </div>
-      <div class="card-stat" style="border-top-color: #2980b9;">
-        <h4>عدد الفواتير</h4>
-        <p id="statOrders">0</p>
-      </div>
+      <button class="btn btn-warning" onclick="addExpense()">تسجيل المصروف 💸</button>
     </div>
 
-    <h3>سجل الفواتير المباعة</h3>
-    <table>
-      <thead>
-        <tr><th>رقم الفاتورة</th><th>التاريخ والوقت</th><th>الإجمالي</th><th>التكلفة</th><th>الربح الصافي</th></tr>
-      </thead>
-      <tbody id="salesTable"></tbody>
-    </table>
-    <br>
-    <button onclick="window.print()" class="btn-primary">🖨️ طباعة التقرير</button>
+    <div class="card">
+      <h3>سجل المصروفات اليومية</h3>
+      <table>
+        <thead>
+          <tr><th>التاريخ</th><th>البند</th><th>المبلغ</th><th>حذف</th></tr>
+        </thead>
+        <tbody id="expensesBody"></tbody>
+      </table>
+    </div>
   </div>
 
-  <!-- قسم الموظفين -->
-  <div id="employees" class="tab-content">
-    <h3>إضافة موظف</h3>
-    <div class="form-group">
-      <input type="text" id="empName" placeholder="اسم الموظف">
-      <select id="empRole">
-        <option value="كاشير">كاشير</option>
-        <option value="مدير محل">مدير محل</option>
-      </select>
-      <button onclick="addEmployee()">حفظ الموظف</button>
+  <!-- TAB 4: REPORTS (التقارير) -->
+  <div id="reportsTab" class="tab-content">
+    <div class="card">
+      <h3>الملخص المالي العام</h3>
+      <div class="grid-layout" style="text-align: center; margin-top: 10px;">
+        <div style="background: #e6f4ea; padding: 15px; border-radius: 8px;">
+          <h4>إجمالي المبيعات</h4>
+          <p id="repSales" style="font-size: 20px; font-weight: bold; color: #137333;">0 ج.م</p>
+        </div>
+        <div style="background: #feefc3; padding: 15px; border-radius: 8px;">
+          <h4>إجمالي المصروفات</h4>
+          <p id="repExpenses" style="font-size: 20px; font-weight: bold; color: #b06000;">0 ج.م</p>
+        </div>
+        <div style="background: #e8f0fe; padding: 15px; border-radius: 8px; grid-column: 1/-1;">
+          <h4>صافي الأرباح النهائى</h4>
+          <p id="repProfit" style="font-size: 24px; font-weight: bold; color: #1a73e8;">0 ج.م</p>
+        </div>
+      </div>
     </div>
-    <h3>قائمة الموظفين</h3>
-    <table>
-      <thead>
-        <tr><th>الاسم</th><th>الوظيفة</th><th>إجراء</th></tr>
-      </thead>
-      <tbody id="employeeTable"></tbody>
-    </table>
+
+    <div class="card">
+      <h3>سجل المبيعات والتفاصيل</h3>
+      <table>
+        <thead>
+          <tr><th>التاريخ</th><th>عدد المواد</th><th>الإجمالي</th></tr>
+        </thead>
+        <tbody id="salesBody"></tbody>
+      </table>
+    </div>
   </div>
 </div>
 
-<!-- Firebase SDKs -->
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-  import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+<!-- PIN MODAL -->
+<div id="pinModal" class="pin-modal">
+  <div class="pin-box">
+    <h3 style="margin-bottom: 10px;">أدخل كلمة سر المدير</h3>
+    <input type="password" id="pinInput" placeholder="****" style="width: 100%; padding: 10px; font-size: 20px; text-align: center; margin-bottom: 15px;">
+    <button class="btn btn-primary" onclick="verifyPin()">دخول</button>
+    <button class="btn btn-danger" onclick="closePinModal()">إلغاء</button>
+  </div>
+</div>
 
+<script>
+  // Firebase Configuration
   const firebaseConfig = {
-    apiKey: "AIzaSyCUD5EgyVCVriMecONO6Q0LNjClbUE7IuM",
-    authDomain: "cashier-app-2dbed.firebaseapp.com",
-    projectId: "cashier-app-2dbed",
-    storageBucket: "cashier-app-2dbed.firebasestorage.app",
-    messagingSenderId: "964436673331",
-    appId: "1:964436673331:web:5d20487388ce2ccf3f3446",
-    measurementId: "G-B66KJMRFG1"
+    databaseURL: "https://toyshop-pos-default-rtdb.firebaseio.com/"
   };
+  firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+  const ADMIN_PIN = "1234";
+  let targetTab = '';
+  let products = {};
+  let cart = [];
+  let sales = [];
+  let expenses = [];
 
-  window.dbRef = { ref, set, push, onValue, remove, db };
-
-  // استماع لحظي للبيانات من السيرفر
-  onValue(ref(db, 'inventory'), (snapshot) => {
-    const data = snapshot.val();
-    window.inventory = data ? Object.keys(data).map(key => ({ firebaseId: key, ...data[key] })) : [];
-    renderPosGrid();
+  // Listeners
+  db.ref('products').on('value', (snapshot) => {
+    products = snapshot.val() || {};
     renderInventory();
+    renderPosProducts();
   });
 
-  onValue(ref(db, 'salesHistory'), (snapshot) => {
-    const data = snapshot.val();
-    window.salesHistory = data ? Object.values(data) : [];
+  db.ref('sales').on('value', (snapshot) => {
+    const data = snapshot.val() || {};
+    sales = Object.keys(data).map(k => data[k]);
     renderReports();
   });
 
-  onValue(ref(db, 'employees'), (snapshot) => {
-    const data = snapshot.val();
-    window.employees = data ? Object.keys(data).map(key => ({ firebaseId: key, ...data[key] })) : [];
-    renderEmployees();
+  db.ref('expenses').on('value', (snapshot) => {
+    const data = snapshot.val() || {};
+    expenses = Object.keys(data).map(k => ({ id: k, ...data[k] }));
+    renderExpenses();
+    renderReports();
   });
-</script>
 
-<script>
-  let inventory = [];
-  let cart = [];
-  let salesHistory = [];
-  let employees = [];
-  
-  // كلمة سر المدير المقترحة (يمكنك تغييرها من هنا)
-  const ADMIN_PASSWORD = "1234";
-  let isAdminAuthenticated = false;
-
-  function openTab(evt, tabName) {
-    let tabcontent = document.getElementsByClassName("tab-content");
-    for (let i = 0; i < tabcontent.length; i++) tabcontent[i].style.display = "none";
-    let tablinks = document.getElementsByClassName("nav-tab");
-    for (let i = 0; i < tablinks.length; i++) tablinks[i].className = tablinks[i].className.replace(" active", "");
-    document.getElementById(tabName).style.display = "block";
-    evt.currentTarget.className += " active";
+  // PIN Protection
+  function checkPinAndSwitch(tabName) {
+    targetTab = tabName;
+    document.getElementById('pinInput').value = '';
+    document.getElementById('pinModal').style.display = 'flex';
   }
 
-  function openProtectedTab(evt, tabName) {
-    if (isAdminAuthenticated) {
-      openTab(evt, tabName);
+  function verifyPin() {
+    const pin = document.getElementById('pinInput').value;
+    if (pin === ADMIN_PIN) {
+      closePinModal();
+      switchTab(targetTab);
     } else {
-      let pwd = prompt("🔐 دخل كلمة السر للوصول لإعدادات المدير:");
-      if (pwd === ADMIN_PASSWORD) {
-        isAdminAuthenticated = true;
-        alert("تم تأكيد كلمة السر بنجاح!");
-        openTab(evt, tabName);
-      } else {
-        alert("❌ كلمة السر غير صحيحة!");
-      }
+      alert('كلمة السر خاطئة!');
     }
   }
 
-  // --- الكاشير ---
-  function renderPosGrid() {
-    const grid = document.getElementById('posProductsGrid');
-    grid.innerHTML = '';
-    if(!inventory || inventory.length === 0) {
-      grid.innerHTML = '<p style="grid-column: 1/-1; color:#888;">لا توجد منتجات بالمخزن، اضف أصنافاً من قسم المخزن.</p>';
+  function closePinModal() {
+    document.getElementById('pinModal').style.display = 'none';
+  }
+
+  function switchTab(tabName) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+    
+    document.getElementById(tabName + 'Tab').classList.add('active');
+    event.target.classList.add('active');
+  }
+
+  // Inventory Logic
+  function addProduct() {
+    const name = document.getElementById('pName').value.trim();
+    const cost = parseFloat(document.getElementById('pCost').value) || 0;
+    const price = parseFloat(document.getElementById('pPrice').value) || 0;
+    const stock = parseInt(document.getElementById('pStock').value) || 0;
+
+    if (!name || price <= 0) {
+      alert('برجاء إدخال اسم المنتج وسعر البيع بشكل صحيح');
       return;
     }
-    inventory.forEach(prod => {
+
+    const id = name.replace(/[^a-zA-Z0-91-9أ-ي]/g, '_');
+    db.ref('products/' + id).set({ name, cost, price, stock }, (err) => {
+      if (!err) {
+        alert('تم حفظ المنتج بنجاح!');
+        document.getElementById('pName').value = '';
+        document.getElementById('pCost').value = '';
+        document.getElementById('pPrice').value = '';
+        document.getElementById('pStock').value = '';
+      }
+    });
+  }
+
+  function deleteProduct(id) {
+    if (confirm('هل أنت تأكد من حذف هذا المنتج؟')) {
+      db.ref('products/' + id).remove();
+    }
+  }
+
+  function renderInventory() {
+    const tbody = document.getElementById('inventoryBody');
+    tbody.innerHTML = '';
+    Object.keys(products).forEach(id => {
+      const p = products[id];
+      tbody.innerHTML += `
+        <tr>
+          <td>${p.name}</td>
+          <td>${p.cost} ج.م</td>
+          <td>${p.price} ج.م</td>
+          <td>${p.stock}</td>
+          <td><button class="btn btn-danger" style="padding: 4px 8px; font-size: 12px;" onclick="deleteProduct('${id}')">حذف</button></td>
+        </tr>
+      `;
+    });
+  }
+
+  // POS Logic
+  function renderPosProducts() {
+    const grid = document.getElementById('productGrid');
+    grid.innerHTML = '';
+    const keys = Object.keys(products);
+    if (keys.length === 0) {
+      grid.innerHTML = '<p style="text-align: center; grid-column: 1/-1;">لا توجد منتجات بالمخزن حالياً</p>';
+      return;
+    }
+    keys.forEach(id => {
+      const p = products[id];
       grid.innerHTML += `
-        <div class="product-card" onclick="selectProductToCart('${prod.firebaseId}')">
-          <img src="${prod.img || 'https://via.placeholder.com/80?text=🧸'}">
-          <div class="title">${prod.name}</div>
-          <div class="sell-price">${prod.sell} ج.م</div>
+        <div class="product-item" onclick="addToCart('${id}')">
+          <div class="name">${p.name}</div>
+          <div class="price">${p.price} ج.م</div>
+          <div class="stock">المتبقي: ${p.stock}</div>
         </div>
       `;
     });
   }
 
-  function selectProductToCart(firebaseId) {
-    const prod = inventory.find(p => p.firebaseId === firebaseId);
-    if(!prod) return;
+  function addToCart(id) {
+    const p = products[id];
+    if (p.stock <= 0) {
+      alert('هذا المنتج نفد من المخزن!');
+      return;
+    }
 
-    let sellPrice = prompt(`تأكيد سعر البيع لـ (${prod.name}):`, prod.sell);
-    if (sellPrice === null || sellPrice === "") return;
-    sellPrice = parseFloat(sellPrice);
+    const existing = cart.find(item => item.id === id);
+    if (existing) {
+      if (existing.qty < p.stock) {
+        existing.qty++;
+      } else {
+        alert('لا توجد كمية كافية بالمخزن!');
+      }
+    } else {
+      cart.push({ id, name: p.name, price: p.price, cost: p.cost, qty: 1 });
+    }
+    renderCart();
+  }
 
-    let qty = prompt(`الكمية المباعة:`, "1");
-    if (qty === null || qty === "") return;
-    qty = parseInt(qty);
-
-    if (isNaN(sellPrice) || isNaN(qty) || qty <= 0) return alert('برجاء إدخال بيانات صحيحة');
-
-    cart.push({
-      firebaseId: prod.firebaseId,
-      name: prod.name,
-      cost: prod.cost,
-      sell: sellPrice,
-      qty: qty,
-      img: prod.img
-    });
-
+  function removeFromCart(index) {
+    cart.splice(index, 1);
     renderCart();
   }
 
   function renderCart() {
-    const tbody = document.getElementById('cartTable');
+    const tbody = document.getElementById('cartBody');
     tbody.innerHTML = '';
-    let grandTotal = 0;
-
+    let total = 0;
     cart.forEach((item, index) => {
-      let total = item.sell * item.qty;
-      grandTotal += total;
+      const itemTotal = item.price * item.qty;
+      total += itemTotal;
       tbody.innerHTML += `
         <tr>
-          <td><img src="${item.img}" class="cart-img"></td>
           <td>${item.name}</td>
-          <td>${item.sell} ج.م</td>
           <td>${item.qty}</td>
-          <td>${total.toFixed(2)} ج.م</td>
-          <td><button class="btn-danger" onclick="cart.splice(${index},1); renderCart();">حذف</button></td>
+          <td>${item.price}</td>
+          <td>${itemTotal}</td>
+          <td><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="removeFromCart(${index})">x</button></td>
         </tr>
       `;
     });
-
-    document.getElementById('grandTotal').innerText = grandTotal.toFixed(2);
+    document.getElementById('cartTotal').innerText = total + ' ج.م';
   }
 
-  function checkoutCart() {
-    if(cart.length === 0) return alert('الفاتورة فارغة!');
+  function checkout() {
+    if (cart.length === 0) {
+      alert('السلة فارغة!');
+      return;
+    }
 
     let totalSales = 0;
     let totalCost = 0;
 
     cart.forEach(item => {
-      totalSales += item.sell * item.qty;
+      totalSales += item.price * item.qty;
       totalCost += item.cost * item.qty;
-
-      // خصم الكمية في Firebase
-      let prod = inventory.find(p => p.firebaseId === item.firebaseId);
-      if(prod) {
-        let newStock = (prod.stock || 0) - item.qty;
-        window.dbRef.set(window.dbRef.ref(window.dbRef.db, 'inventory/' + item.firebaseId + '/stock'), newStock);
-      }
+      // Update Stock in Firebase
+      db.ref('products/' + item.id + '/stock').transaction(current => (current || 0) - item.qty);
     });
 
-    // إضافة الفاتورة للسيرفر
-    const newSaleRef = window.dbRef.push(window.dbRef.ref(window.dbRef.db, 'salesHistory'));
-    window.dbRef.set(newSaleRef, {
-      id: Date.now(),
-      date: new Date().toLocaleString('ar-EG'),
+    const saleRecord = {
+      timestamp: new Date().toLocaleString('ar-EG'),
+      itemsCount: cart.length,
       totalSales: totalSales,
-      totalCost: totalCost,
       profit: totalSales - totalCost
-    });
+    };
 
-    cart = [];
-    renderCart();
-    alert('تم إتمام البيع بنجاح وتحديث كافة الأجهزة المربوطة!');
-  }
-
-  function clearCart() {
-    if(confirm('هل تريد إلغاء الفاتورة؟')) {
-      cart = [];
-      renderCart();
-    }
-  }
-
-  // --- المخزن ---
-  function addInventoryProduct() {
-    const name = document.getElementById('prodName').value;
-    const cost = parseFloat(document.getElementById('prodCost').value);
-    const sell = parseFloat(document.getElementById('prodSell').value);
-    const stock = parseInt(document.getElementById('prodStock').value) || 0;
-    const imgInput = document.getElementById('prodImg');
-
-    if(!name || isNaN(cost)) return alert('يرجى إدخال اسم اللعبة وسعر الجملة بشكل صحيح');
-
-    let defaultImg = 'https://via.placeholder.com/80?text=🎮';
-
-    if (imgInput.files && imgInput.files[0]) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        saveProductToFirebase(name, cost, sell, stock, e.target.result);
+    db.ref('sales').push(saleRecord, (err) => {
+      if (!err) {
+        alert('تمت عملية البيع بنجاح! 🧾');
+        cart = [];
+        renderCart();
       }
-      reader.readAsDataURL(imgInput.files[0]);
-    } else {
-      saveProductToFirebase(name, cost, sell, stock, defaultImg);
-    }
-  }
-
-  function saveProductToFirebase(name, cost, sell, stock, img) {
-    const newProdRef = window.dbRef.push(window.dbRef.ref(window.dbRef.db, 'inventory'));
-    window.dbRef.set(newProdRef, {
-      name, cost, sell: sell || cost, stock, img
     });
-
-    document.getElementById('prodName').value = '';
-    document.getElementById('prodCost').value = '';
-    document.getElementById('prodSell').value = '';
-    document.getElementById('prodStock').value = '';
-    document.getElementById('prodImg').value = '';
-    alert('تم رفع الصنف للسيرفر بنجاح!');
   }
 
-  function deleteProduct(firebaseId) {
-    if(confirm('هل تريد حذف هذا المنتج؟')) {
-      window.dbRef.remove(window.dbRef.ref(window.dbRef.db, 'inventory/' + firebaseId));
+  // Expenses Logic
+  function addExpense() {
+    const title = document.getElementById('expTitle').value.trim();
+    const amount = parseFloat(document.getElementById('expAmount').value) || 0;
+
+    if (!title || amount <= 0) {
+      alert('برجاء إدخال بند المصروف والمبلغ بشكل صحيح');
+      return;
+    }
+
+    db.ref('expenses').push({
+      title: title,
+      amount: amount,
+      timestamp: new Date().toLocaleString('ar-EG')
+    }, (err) => {
+      if (!err) {
+        alert('تم تسجيل المصروف بنجاح!');
+        document.getElementById('expTitle').value = '';
+        document.getElementById('expAmount').value = '';
+      }
+    });
+  }
+
+  function deleteExpense(id) {
+    if (confirm('هل تريد حذف هذا المصروف؟')) {
+      db.ref('expenses/' + id).remove();
     }
   }
 
-  function renderInventory() {
-    const tbody = document.getElementById('inventoryTable');
+  function renderExpenses() {
+    const tbody = document.getElementById('expensesBody');
     tbody.innerHTML = '';
-    inventory.forEach((prod) => {
+    expenses.forEach(e => {
       tbody.innerHTML += `
         <tr>
-          <td><img src="${prod.img}" class="cart-img"></td>
-          <td>${prod.name}</td>
-          <td>${prod.cost} ج.م</td>
-          <td>${prod.sell} ج.م</td>
-          <td>${prod.stock}</td>
-          <td><button class="btn-danger" onclick="deleteProduct('${prod.firebaseId}')">حذف</button></td>
+          <td>${e.timestamp}</td>
+          <td>${e.title}</td>
+          <td>${e.amount} ج.م</td>
+          <td><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteExpense('${e.id}')">حذف</button></td>
         </tr>
       `;
     });
   }
 
-  // --- التقارير ---
+  // Reports Logic
   function renderReports() {
-    let salesSum = 0, costSum = 0, profitSum = 0;
-    const tbody = document.getElementById('salesTable');
-    tbody.innerHTML = '';
+    let totalSales = 0;
+    let totalGrossProfit = 0;
+    let totalExpensesSum = 0;
 
-    salesHistory.forEach((sale, i) => {
-      salesSum += sale.totalSales;
-      costSum += sale.totalCost;
-      profitSum += sale.profit;
-
-      tbody.innerHTML += `
-        <tr>
-          <td>#${i + 1}</td>
-          <td>${sale.date}</td>
-          <td>${sale.totalSales.toFixed(2)} ج.م</td>
-          <td>${sale.totalCost.toFixed(2)} ج.م</td>
-          <td style="color:green; font-weight:bold;">${sale.profit.toFixed(2)} ج.م</td>
-        </tr>
-      `;
+    sales.forEach(s => {
+      totalSales += s.totalSales || 0;
+      totalGrossProfit += s.profit || 0;
     });
 
-    document.getElementById('statSales').innerText = salesSum.toFixed(2) + ' ج.م';
-    document.getElementById('statCost').innerText = costSum.toFixed(2) + ' ج.م';
-    document.getElementById('statProfit').innerText = profitSum.toFixed(2) + ' ج.م';
-    document.getElementById('statOrders').innerText = salesHistory.length;
-  }
+    expenses.forEach(e => {
+      totalExpensesSum += e.amount || 0;
+    });
 
-  // --- الموظفين ---
-  function addEmployee() {
-    const name = document.getElementById('empName').value;
-    const role = document.getElementById('empRole').value;
-    if(!name) return;
+    const netProfit = totalGrossProfit - totalExpensesSum;
 
-    const newEmpRef = window.dbRef.push(window.dbRef.ref(window.dbRef.db, 'employees'));
-    window.dbRef.set(newEmpRef, { name, role });
-    document.getElementById('empName').value = '';
-  }
+    document.getElementById('repSales').innerText = totalSales + ' ج.م';
+    document.getElementById('repExpenses').innerText = totalExpensesSum + ' ج.م';
+    document.getElementById('repProfit').innerText = netProfit + ' ج.م';
 
-  function deleteEmployee(firebaseId) {
-    window.dbRef.remove(window.dbRef.ref(window.dbRef.db, 'employees/' + firebaseId));
-  }
-
-  function renderEmployees() {
-    const tbody = document.getElementById('employeeTable');
+    const tbody = document.getElementById('salesBody');
     tbody.innerHTML = '';
-    employees.forEach(emp => {
+    sales.slice().reverse().forEach(s => {
       tbody.innerHTML += `
         <tr>
-          <td>${emp.name}</td>
-          <td>${emp.role}</td>
-          <td><button class="btn-danger" onclick="deleteEmployee('${emp.firebaseId}')">حذف</button></td>
-        </tr>`;
+          <td>${s.timestamp}</td>
+          <td>${s.itemsCount}</td>
+          <td>${s.totalSales} ج.م</td>
+        </tr>
+      `;
     });
   }
 </script>
-
 </body>
 </html>
