@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نظام كاشير متجر الألعاب السحابي</title>
+  <title>نظام كاشير متجر الألعاب</title>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
     body { background-color: #f0f2f5; padding: 15px; color: #333; }
@@ -101,12 +101,19 @@
     <div class="card">
       <h3 id="formTitle">إضافة منتج جديد بالمخزن</h3>
       <input type="hidden" id="pEditId">
+      <input type="hidden" id="pImageBase64">
       <div class="grid-layout">
         <div class="form-group"><label>اسم اللعبة/المنتج</label><input type="text" id="pName" placeholder="مثال: عروسة باربي"></div>
         <div class="form-group"><label>سعر الشراء (التكلفة)</label><input type="number" id="pCost" placeholder="50"></div>
         <div class="form-group"><label>سعر البيع</label><input type="number" id="pPrice" placeholder="80"></div>
         <div class="form-group"><label>الكمية المتوفرة</label><input type="number" id="pStock" placeholder="10"></div>
-        <div class="form-group" style="grid-column: 1/-1;"><label>رابط صورة المنتج (اختياري)</label><input type="text" id="pImage" placeholder="انسخ رابط الصورة هنا"></div>
+        <div class="form-group" style="grid-column: 1/-1;">
+          <label>صورة المنتج (اختر صورة من الاستوديو)</label>
+          <input type="file" id="pImageFile" accept="image/*" onchange="previewImage(event)" style="padding: 7px; background: white;">
+          <div style="margin-top: 8px; text-align: center;">
+            <img id="imgPreview" src="" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; display: none; border: 1px solid #ccc; margin: 0 auto;">
+          </div>
+        </div>
       </div>
       <button id="saveBtn" class="btn btn-primary" onclick="saveProduct()">حفظ المنتج بالمخزن 💾</button>
       <button id="cancelBtn" class="btn btn-danger" style="display:none; margin-top: 5px;" onclick="resetForm()">إلغاء التعديل ❌</button>
@@ -248,13 +255,27 @@
     event.target.classList.add('active');
   }
 
+  function previewImage(event) {
+    const file = event.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        document.getElementById('pImageBase64').value = e.target.result;
+        const imgPre = document.getElementById('imgPreview');
+        imgPre.src = e.target.result;
+        imgPre.style.display = 'block';
+      }
+      reader.readAsDataURL(file);
+    }
+  }
+
   function saveProduct() {
     const editId = document.getElementById('pEditId').value;
     const name = document.getElementById('pName').value.trim();
     const cost = parseFloat(document.getElementById('pCost').value) || 0;
     const price = parseFloat(document.getElementById('pPrice').value) || 0;
     const stock = parseInt(document.getElementById('pStock').value) || 0;
-    const image = document.getElementById('pImage').value.trim() || 'https://via.placeholder.com/60?text=Toy';
+    let image = document.getElementById('pImageBase64').value;
 
     if (!name || price <= 0) {
       alert('برجاء إدخال اسم المنتج وسعر البيع بشكل صحيح');
@@ -262,6 +283,14 @@
     }
 
     const id = editId ? editId : name.replace(/[^a-zA-Z0-91-9أ-ي]/g, '_');
+
+    // If editing and no new image chosen, keep old image
+    if (!image && editId && products[editId]) {
+      image = products[editId].image;
+    }
+    if (!image) {
+      image = 'https://via.placeholder.com/60?text=Toy';
+    }
 
     db.ref('products/' + id).set({ name, cost, price, stock, image }, (err) => {
       if (!err) {
@@ -279,8 +308,16 @@
     document.getElementById('pCost').value = p.cost;
     document.getElementById('pPrice').value = p.price;
     document.getElementById('pStock').value = p.stock;
-    document.getElementById('pImage').value = p.image === 'https://via.placeholder.com/60?text=Toy' ? '' : p.image;
+    document.getElementById('pImageBase64').value = p.image;
     
+    if (p.image && p.image.startsWith('data:image')) {
+      const imgPre = document.getElementById('imgPreview');
+      imgPre.src = p.image;
+      imgPre.style.display = 'block';
+    } else {
+      document.getElementById('imgPreview').style.display = 'none';
+    }
+
     document.getElementById('formTitle').innerText = 'تعديل المنتج: ' + p.name;
     document.getElementById('saveBtn').innerText = 'تحديث وتعديل المنتج 🔄';
     document.getElementById('saveBtn').className = 'btn btn-info';
@@ -294,7 +331,9 @@
     document.getElementById('pCost').value = '';
     document.getElementById('pPrice').value = '';
     document.getElementById('pStock').value = '';
-    document.getElementById('pImage').value = '';
+    document.getElementById('pImageBase64').value = '';
+    document.getElementById('pImageFile').value = '';
+    document.getElementById('imgPreview').style.display = 'none';
     
     document.getElementById('formTitle').innerText = 'إضافة منتج جديد بالمخزن';
     document.getElementById('saveBtn').innerText = 'حفظ المنتج بالمخزن 💾';
@@ -503,5 +542,4 @@
   }
 </script>
 </body>
-</html>
-
+    </html>
