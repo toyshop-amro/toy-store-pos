@@ -121,4 +121,178 @@
 
 </body>
   </html>
+
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نظام كاشير متجر الألعاب المتكامل</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; }
+    body { background-color: #f4f6f9; margin: 0; padding: 10px; direction: rtl; }
+    .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #2c3e50; font-size: 22px; margin-bottom: 15px; }
+    
+    /* قائمة التنقل بين الأقسام */
+    .nav-tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid #ddd; overflow-x: auto; padding-bottom: 5px; }
+    .nav-tab { padding: 8px 12px; background: #e0e0e0; border: none; border-radius: 6px 6px 0 0; cursor: pointer; font-weight: bold; font-size: 14px; white-space: nowrap; }
+    .nav-tab.active { background: #27ae60; color: white; }
+    
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .form-group { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+    input, select, button { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+    input, select { flex: 1; min-width: 120px; }
+    button { background-color: #27ae60; color: white; border: none; cursor: pointer; font-weight: bold; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+    th { background-color: #34495e; color: white; }
+    .total-box { font-size: 18px; font-weight: bold; text-align: left; margin-top: 10px; color: #c0392b; }
+    .btn-danger { background-color: #e74c3c; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>🧸 نظام إدارة متجر الألعاب</h1>
+
+  <!-- أزرار التنقل -->
+  <div class="nav-tabs">
+    <button class="nav-tab active" onclick="switchTab('pos')">🛒 الكاشير</button>
+    <button class="nav-tab" onclick="switchTab('inventory')">📦 المخزن والمنتجات</button>
+    <button class="nav-tab" onclick="switchTab('employees')">👥 الموظفين</button>
+    <button class="nav-tab" onclick="switchTab('settings')">⚙️ الإعدادات</button>
+  </div>
+
+  <!-- قسم الكاشير -->
+  <div id="pos" class="tab-content active">
+    <h3>تسجيل بيع جديد</h3>
+    <div class="form-group">
+      <input type="text" id="itemName" placeholder="اسم اللعبة">
+      <input type="number" id="itemPrice" placeholder="السعر">
+      <input type="number" id="itemQty" placeholder="الكمية" value="1">
+      <button onclick="addItem()">إضافة للفاتورة</button>
+    </div>
+
+    <h3>الفاتورة الحالية</h3>
+    <table>
+      <thead>
+        <tr><th>الصنف</th><th>السعر</th><th>الكمية</th><th>الإجمالي</th><th>إجراء</th></tr>
+      </thead>
+      <tbody id="cartTable"></tbody>
+    </table>
+    <div class="total-box">إجمالي الفاتورة: <span id="grandTotal">0.00</span> ج.م</div>
+    <br>
+    <button onclick="clearCart()" class="btn-danger">إنهاء الفاتورة</button>
+  </div>
+
+  <!-- قسم المخزن -->
+  <div id="inventory" class="tab-content">
+    <h3>إضافة صنف جديد للمخزن</h3>
+    <div class="form-group">
+      <input type="text" id="prodName" placeholder="اسم المنتج">
+      <input type="number" id="prodPrice" placeholder="سعر البيع">
+      <input type="number" id="prodStock" placeholder="الكمية المتاحة">
+      <button onclick="addInventory()">حفظ للمخزن</button>
+    </div>
+    <h3>الأصناف المسجلة</h3>
+    <table>
+      <thead>
+        <tr><th>المنتج</th><th>السعر</th><th>المخزون</th></tr>
+      </thead>
+      <tbody id="inventoryTable"></tbody>
+    </table>
+  </div>
+
+  <!-- قسم الموظفين -->
+  <div id="employees" class="tab-content">
+    <h3>إضافة موظف جديد</h3>
+    <div class="form-group">
+      <input type="text" id="empName" placeholder="اسم الموظف">
+      <select id="empRole">
+        <option value="كاشير">كاشير</option>
+        <option value="مدير">مدير محل</option>
+      </select>
+      <button onclick="addEmployee()">إضافة الموظف</button>
+    </div>
+    <h3>قائمة الموظفين</h3>
+    <table>
+      <thead>
+        <tr><th>الاسم</th><th>الوظيفة</th></tr>
+      </thead>
+      <tbody id="employeeTable"></tbody>
+    </table>
+  </div>
+
+  <!-- قسم الإعدادات -->
+  <div id="settings" class="tab-content">
+    <h3>إعدادات المحل</h3>
+    <div class="form-group">
+      <input type="text" id="shopName" placeholder="اسم المحل" value="متجر الألعاب">
+      <input type="text" id="shopPhone" placeholder="رقم الهاتف">
+      <button onclick="alert('تم حفظ الإعدادات بنجاح!')">حفظ الإعدادات</button>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  function switchTab(tabId) {
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+    document.getElementById(tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+  }
+
+  let cart = [];
+  function addItem() {
+    const name = document.getElementById('itemName').value;
+    const price = parseFloat(document.getElementById('itemPrice').value);
+    const qty = parseInt(document.getElementById('itemQty').value);
+    if(!name || !price) return alert('أدخل بيانات صحيحة');
+    
+    cart.push({ name, price, qty, total: price * qty });
+    renderCart();
+    document.getElementById('itemName').value = '';
+    document.getElementById('itemPrice').value = '';
+  }
+
+  function renderCart() {
+    const tbody = document.getElementById('cartTable');
+    tbody.innerHTML = '';
+    let total = 0;
+    cart.forEach((item, i) => {
+      total += item.total;
+      tbody.innerHTML += `<tr><td>${item.name}</td><td>${item.price}</td><td>${item.qty}</td><td>${item.total}</td><td><button class="btn-danger" onclick="cart.splice(${i},1);renderCart();">حذف</button></td></tr>`;
+    });
+    document.getElementById('grandTotal').innerText = total.toFixed(2);
+  }
+
+  function clearCart() {
+    if(cart.length && confirm('إنهاء الفاتورة؟')) { cart = []; renderCart(); }
+  }
+
+  function addInventory() {
+    const name = document.getElementById('prodName').value;
+    const price = document.getElementById('prodPrice').value;
+    const stock = document.getElementById('prodStock').value;
+    if(!name) return;
+    document.getElementById('inventoryTable').innerHTML += `<tr><td>${name}</td><td>${price}</td><td>${stock}</td></tr>`;
+    document.getElementById('prodName').value = '';
+  }
+
+  function addEmployee() {
+    const name = document.getElementById('empName').value;
+    const role = document.getElementById('empRole').value;
+    if(!name) return;
+    document.getElementById('employeeTable').innerHTML += `<tr><td>${name}</td><td>${role}</td></tr>`;
+    document.getElementById('empName').value = '';
+  }
+</script>
+
+</body>
+</html>
+
   
