@@ -83,7 +83,7 @@
         <h3>سلة الشراء الحالية</h3>
         <table>
           <thead>
-            <tr><th>المنتج</th><th>العدد</th><th>السعر</th><th>الإجمالي</th><th>حذف</th></tr>
+            <tr><th>المنتج</th><th>العدد</th><th>السعر (قابل للتعديل)</th><th>الإجمالي</th><th>حذف</th></tr>
           </thead>
           <tbody id="cartBody"></tbody>
         </table>
@@ -105,7 +105,7 @@
       <div class="grid-layout">
         <div class="form-group"><label>اسم اللعبة/المنتج</label><input type="text" id="pName" placeholder="مثال: عروسة باربي"></div>
         <div class="form-group"><label>سعر الشراء (التكلفة)</label><input type="number" id="pCost" placeholder="50"></div>
-        <div class="form-group"><label>سعر البيع</label><input type="number" id="pPrice" placeholder="80"></div>
+        <div class="form-group"><label>سعر البيع الافتراضي</label><input type="number" id="pPrice" placeholder="80"></div>
         <div class="form-group"><label>الكمية المتوفرة</label><input type="number" id="pStock" placeholder="10"></div>
         <div class="form-group" style="grid-column: 1/-1;">
           <label>صورة المنتج من الاستوديو</label>
@@ -411,6 +411,14 @@
     renderCart();
   }
 
+  function updateItemPrice(index, newPrice) {
+    const price = parseFloat(newPrice);
+    if (!isNaN(price) && price >= 0) {
+      cart[index].price = price;
+      renderCartTotalOnly();
+    }
+  }
+
   function removeFromCart(index) {
     cart.splice(index, 1);
     renderCart();
@@ -427,7 +435,7 @@
         <tr>
           <td>${item.name}</td>
           <td>${item.qty}</td>
-          <td>${item.price}</td>
+          <td><input type="number" value="${item.price}" style="width: 70px; padding: 4px; text-align: center; border: 1px solid #ccc; border-radius: 4px;" onchange="updateItemPrice(${index}, this.value)"></td>
           <td>${itemTotal}</td>
           <td><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="removeFromCart(${index})">x</button></td>
         </tr>
@@ -436,8 +444,23 @@
     document.getElementById('cartTotal').innerText = total + ' ج.م';
   }
 
+  function renderCartTotalOnly() {
+    let total = 0;
+    cart.forEach((item, index) => {
+      const itemTotal = item.price * item.qty;
+      total += itemTotal;
+      // Update specific row total cell text
+      const rows = document.getElementById('cartBody').rows;
+      if (rows[index]) {
+        rows[index].cells[3].innerText = itemTotal;
+      }
+    });
+    document.getElementById('cartTotal').innerText = total + ' ج.م';
+  }
+
   function checkout() {
     if (cart.length === 0) {
+      abort = true;
       alert('السلة فارغة!');
       return;
     }
@@ -527,7 +550,7 @@
     const netProfit = totalGrossProfit - totalExpensesSum;
 
     document.getElementById('repSales').innerText = totalSales + ' ج.م';
-    document.getElementById('repExpenses').innerText = totalExpensesSum + ' ج.م';
+    document.getElementById('repExpenses').innerText + totalExpensesSum + ' ج.م';
     document.getElementById('repProfit').innerText = netProfit + ' ج.م';
 
     const tbody = document.getElementById('salesBody');
@@ -544,4 +567,6 @@
   }
 </script>
 </body>
-                                  </html>
+          </html>
+
+        
