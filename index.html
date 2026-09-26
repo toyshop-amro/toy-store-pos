@@ -3,25 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نظام كاشير متجر الألعاب المطور</title>
+  <title>نظام كاشير متجر الألعاب السحابي</title>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
     body { background-color: #f0f2f5; margin: 0; padding: 10px; direction: rtl; }
     .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-    h1 { text-align: center; color: #2c3e50; font-size: 22px; margin-bottom: 15px; }
+    h1 { text-align: center; color: #2c3e50; font-size: 20px; margin-bottom: 15px; }
+    
+    .status-bar { text-align: center; padding: 6px; font-size: 12px; border-radius: 6px; margin-bottom: 12px; font-weight: bold; }
+    .status-online { background-color: #d4edda; color: #155724; }
     
     .nav-tabs { display: flex; gap: 8px; margin-bottom: 15px; border-bottom: 2px solid #eee; overflow-x: auto; padding-bottom: 8px; }
-    .nav-tab { padding: 10px 16px; background: #e9ecef; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; color: #495057; white-space: nowrap; }
+    .nav-tab { padding: 10px 16px; background: #e9ecef; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 13px; color: #495057; white-space: nowrap; }
     .nav-tab.active { background: #27ae60; color: white; }
     
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    /* شبكة المنتجات بالصور */
-    .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 20px; max-height: 300px; overflow-y: auto; padding: 5px; border: 1px solid #ddd; border-radius: 8px; }
-    .product-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; background: #fff; transition: transform 0.1s, box-shadow 0.1s; }
-    .product-card:active { transform: scale(0.98); }
-    .product-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); border-color: #27ae60; }
+    .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 20px; max-height: 320px; overflow-y: auto; padding: 5px; border: 1px solid #ddd; border-radius: 8px; }
+    .product-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; background: #fff; transition: transform 0.1s; }
+    .product-card:active { transform: scale(0.97); }
     .product-card img { width: 100%; height: 75px; object-fit: cover; border-radius: 6px; margin-bottom: 5px; }
     .product-card .title { font-size: 12px; font-weight: bold; color: #333; margin-bottom: 3px; }
     .product-card .cost-price { font-size: 11px; color: #7f8c8d; }
@@ -50,7 +51,8 @@
 <body>
 
 <div class="container">
-  <h1>🧸 نظام إدارة متجر الألعاب</h1>
+  <h1>🧸 نظام إدارة متجر الألعاب (متزامن)</h1>
+  <div id="statusBar" class="status-bar status-online">⚡ متصل بالسيرفر السحابي - متزامن بين الأجهزة</div>
 
   <div class="nav-tabs">
     <button class="nav-tab active" onclick="openTab(event, 'pos')">🛒 الكاشير والمبيعات</button>
@@ -63,7 +65,7 @@
   <div id="pos" class="tab-content active">
     <h3>اختر المنتج للبيع:</h3>
     <div class="products-grid" id="posProductsGrid">
-      <!-- يتم تحميل المنتجات هنا -->
+      <p style="grid-column: 1/-1; text-align:center;">جاري تحميل الأصناف...</p>
     </div>
 
     <h3>الفاتورة الحالية</h3>
@@ -80,7 +82,7 @@
     <button onclick="clearCart()" class="btn-danger">إلغاء الفاتورة</button>
   </div>
 
-  <!-- قسم المخزن والجملة -->
+  <!-- قسم المخزن -->
   <div id="inventory" class="tab-content">
     <h3>إضافة صنف جديد للمخزن</h3>
     <div class="form-group">
@@ -102,7 +104,7 @@
     </table>
   </div>
 
-  <!-- قسم التقارير والمبيعات -->
+  <!-- قسم التقارير -->
   <div id="reports" class="tab-content">
     <h3>ملخص حركة المبيعات</h3>
     <div class="summary-cards">
@@ -149,29 +151,59 @@
     <h3>قائمة الموظفين</h3>
     <table>
       <thead>
-        <tr><th>الاسم</th><th>الوظيفة</th></tr>
+        <tr><th>الاسم</th><th>الوظيفة</th><th>إجراء</th></tr>
       </thead>
       <tbody id="employeeTable"></tbody>
     </table>
   </div>
-
 </div>
 
-<script>
-  // تهيئة البيانات والذاكرة
-  let inventory = JSON.parse(localStorage.getItem('inventory')) || [
-    { id: 1, name: 'دبدوب صغير', cost: 40, sell: 65, stock: 10, img: 'https://via.placeholder.com/80?text=🧸' },
-    { id: 2, name: 'سيارة بالريموت', cost: 120, sell: 180, stock: 5, img: 'https://via.placeholder.com/80?text=🏎️' }
-  ];
-  let cart = [];
-  let salesHistory = JSON.parse(localStorage.getItem('salesHistory')) || [];
-  let employees = JSON.parse(localStorage.getItem('employees')) || [];
+<!-- Firebase SDKs -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getDatabase, ref, set, push, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
 
-  function saveAll() {
-    localStorage.setItem('inventory', JSON.stringify(inventory));
-    localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
-    localStorage.setItem('employees', JSON.stringify(employees));
-  }
+  const firebaseConfig = {
+    apiKey: "AIzaSyCUD5EgyVCVriMecONO6Q0LNjClbUE7IuM",
+    authDomain: "cashier-app-2dbed.firebaseapp.com",
+    projectId: "cashier-app-2dbed",
+    storageBucket: "cashier-app-2dbed.firebasestorage.app",
+    messagingSenderId: "964436673331",
+    appId: "1:964436673331:web:5d20487388ce2ccf3f3446",
+    measurementId: "G-B66KJMRFG1"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getDatabase(app);
+
+  window.dbRef = { ref, set, push, onValue, remove, db };
+
+  // استماع لحظي للبيانات من السيرفر
+  onValue(ref(db, 'inventory'), (snapshot) => {
+    const data = snapshot.val();
+    window.inventory = data ? Object.keys(data).map(key => ({ firebaseId: key, ...data[key] })) : [];
+    renderPosGrid();
+    renderInventory();
+  });
+
+  onValue(ref(db, 'salesHistory'), (snapshot) => {
+    const data = snapshot.val();
+    window.salesHistory = data ? Object.values(data) : [];
+    renderReports();
+  });
+
+  onValue(ref(db, 'employees'), (snapshot) => {
+    const data = snapshot.val();
+    window.employees = data ? Object.keys(data).map(key => ({ firebaseId: key, ...data[key] })) : [];
+    renderEmployees();
+  });
+</script>
+
+<script>
+  let inventory = [];
+  let cart = [];
+  let salesHistory = [];
+  let employees = [];
 
   function openTab(evt, tabName) {
     let tabcontent = document.getElementsByClassName("tab-content");
@@ -180,24 +212,20 @@
     for (let i = 0; i < tablinks.length; i++) tablinks[i].className = tablinks[i].className.replace(" active", "");
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.className += " active";
-
-    if(tabName === 'pos') renderPosGrid();
-    if(tabName === 'inventory') renderInventory();
-    if(tabName === 'reports') renderReports();
   }
 
   // --- الكاشير ---
   function renderPosGrid() {
     const grid = document.getElementById('posProductsGrid');
     grid.innerHTML = '';
-    if(inventory.length === 0) {
-      grid.innerHTML = '<p style="grid-column: 1/-1; color:#888;">لا توجد منتجات بالمخزن، قم بإضافة أصناف من قسم المخزن أولاً.</p>';
+    if(!inventory || inventory.length === 0) {
+      grid.innerHTML = '<p style="grid-column: 1/-1; color:#888;">لا توجد منتجات بالمخزن، اضف أصنافاً من قسم المخزن.</p>';
       return;
     }
     inventory.forEach(prod => {
       grid.innerHTML += `
-        <div class="product-card" onclick="selectProductToCart(${prod.id})">
-          <img src="${prod.img}">
+        <div class="product-card" onclick="selectProductToCart('${prod.firebaseId}')">
+          <img src="${prod.img || 'https://via.placeholder.com/80?text=🧸'}">
           <div class="title">${prod.name}</div>
           <div class="cost-price">جملة: ${prod.cost} ج.م</div>
         </div>
@@ -205,11 +233,11 @@
     });
   }
 
-  function selectProductToCart(id) {
-    const prod = inventory.find(p => p.id === id);
+  function selectProductToCart(firebaseId) {
+    const prod = inventory.find(p => p.firebaseId === firebaseId);
     if(!prod) return;
 
-    let sellPrice = prompt(`تحديد سعر البيع لـ (${prod.name}):`, prod.sell);
+    let sellPrice = prompt(`سعر البيع لـ (${prod.name}):`, prod.sell);
     if (sellPrice === null || sellPrice === "") return;
     sellPrice = parseFloat(sellPrice);
 
@@ -217,10 +245,10 @@
     if (qty === null || qty === "") return;
     qty = parseInt(qty);
 
-    if (isNaN(sellPrice) || isNaN(qty) || qty <= 0) return alert('برجاء إدخال أرقام صحيحة');
+    if (isNaN(sellPrice) || isNaN(qty) || qty <= 0) return alert('برجاء إدخال بيانات صحيحة');
 
     cart.push({
-      id: prod.id,
+      firebaseId: prod.firebaseId,
       name: prod.name,
       cost: prod.cost,
       sell: sellPrice,
@@ -265,12 +293,17 @@
       totalSales += item.sell * item.qty;
       totalCost += item.cost * item.qty;
 
-      // تخصم الكمية من المخزون
-      let prod = inventory.find(p => p.id === item.id);
-      if(prod) prod.stock -= item.qty;
+      // خصم الكمية في Firebase
+      let prod = inventory.find(p => p.firebaseId === item.firebaseId);
+      if(prod) {
+        let newStock = (prod.stock || 0) - item.qty;
+        window.dbRef.set(window.dbRef.ref(window.dbRef.db, 'inventory/' + item.firebaseId + '/stock'), newStock);
+      }
     });
 
-    salesHistory.push({
+    // إضافة الفاتورة للسيرفر
+    const newSaleRef = window.dbRef.push(window.dbRef.ref(window.dbRef.db, 'salesHistory'));
+    window.dbRef.set(newSaleRef, {
       id: Date.now(),
       date: new Date().toLocaleString('ar-EG'),
       totalSales: totalSales,
@@ -278,15 +311,13 @@
       profit: totalSales - totalCost
     });
 
-    saveAll();
     cart = [];
     renderCart();
-    renderPosGrid();
-    alert('تم حفظ الفاتورة بنجاح وتحديث حركة المبيعات والمخزن!');
+    alert('تم إتمام البيع بنجاح وتحديث كافة الأجهزة المربوطة!');
   }
 
   function clearCart() {
-    if(confirm('هل تريد إلغاء الفاتورة بالحالية؟')) {
+    if(confirm('هل تريد إلغاء الفاتورة؟')) {
       cart = [];
       renderCart();
     }
@@ -300,42 +331,45 @@
     const stock = parseInt(document.getElementById('prodStock').value) || 0;
     const imgInput = document.getElementById('prodImg');
 
-    if(!name || isNaN(cost)) return alert('برجاء كتابة الاسم وسعر الجملة بشكل صحيح');
+    if(!name || isNaN(cost)) return alert('يرجى إدخال اسم اللعبة وسعر الجملة بشكل صحيح');
 
     let defaultImg = 'https://via.placeholder.com/80?text=🎮';
 
     if (imgInput.files && imgInput.files[0]) {
       const reader = new FileReader();
       reader.onload = function(e) {
-        saveProductObj(name, cost, sell, stock, e.target.result);
+        saveProductToFirebase(name, cost, sell, stock, e.target.result);
       }
       reader.readAsDataURL(imgInput.files[0]);
     } else {
-      saveProductObj(name, cost, sell, stock, defaultImg);
+      saveProductToFirebase(name, cost, sell, stock, defaultImg);
     }
   }
 
-  function saveProductObj(name, cost, sell, stock, img) {
-    inventory.push({
-      id: Date.now(),
+  function saveProductToFirebase(name, cost, sell, stock, img) {
+    const newProdRef = window.dbRef.push(window.dbRef.ref(window.dbRef.db, 'inventory'));
+    window.dbRef.set(newProdRef, {
       name, cost, sell: sell || cost, stock, img
     });
-    saveAll();
-    renderInventory();
-    renderPosGrid();
 
     document.getElementById('prodName').value = '';
     document.getElementById('prodCost').value = '';
     document.getElementById('prodSell').value = '';
     document.getElementById('prodStock').value = '';
     document.getElementById('prodImg').value = '';
-    alert('تمت إضافة المنتج بنجاح للمخزن!');
+    alert('تم رفع الصنف للسيرفر بنجاح!');
+  }
+
+  function deleteProduct(firebaseId) {
+    if(confirm('هل تريد حذف هذا المنتج؟')) {
+      window.dbRef.remove(window.dbRef.ref(window.dbRef.db, 'inventory/' + firebaseId));
+    }
   }
 
   function renderInventory() {
     const tbody = document.getElementById('inventoryTable');
     tbody.innerHTML = '';
-    inventory.forEach((prod, index) => {
+    inventory.forEach((prod) => {
       tbody.innerHTML += `
         <tr>
           <td><img src="${prod.img}" class="cart-img"></td>
@@ -343,7 +377,7 @@
           <td>${prod.cost} ج.م</td>
           <td>${prod.sell} ج.م</td>
           <td>${prod.stock}</td>
-          <td><button class="btn-danger" onclick="inventory.splice(${index},1); saveAll(); renderInventory();">حذف</button></td>
+          <td><button class="btn-danger" onclick="deleteProduct('${prod.firebaseId}')">حذف</button></td>
         </tr>
       `;
     });
@@ -373,7 +407,7 @@
 
     document.getElementById('statSales').innerText = salesSum.toFixed(2) + ' ج.م';
     document.getElementById('statCost').innerText = costSum.toFixed(2) + ' ج.م';
-    document.getElementById('statProfit').innerText = profitSum.toFixed(2) + ' ج.م';
+    document.getElementById('statProfit').innerText = profitSum.toFixed(2) + ' ج.m';
     document.getElementById('statOrders').innerText = salesHistory.length;
   }
 
@@ -382,26 +416,29 @@
     const name = document.getElementById('empName').value;
     const role = document.getElementById('empRole').value;
     if(!name) return;
-    employees.push({ name, role });
-    saveAll();
-    renderEmployees();
+
+    const newEmpRef = window.dbRef.push(window.dbRef.ref(window.dbRef.db, 'employees'));
+    window.dbRef.set(newEmpRef, { name, role });
     document.getElementById('empName').value = '';
+  }
+
+  function deleteEmployee(firebaseId) {
+    window.dbRef.remove(window.dbRef.ref(window.dbRef.db, 'employees/' + firebaseId));
   }
 
   function renderEmployees() {
     const tbody = document.getElementById('employeeTable');
     tbody.innerHTML = '';
     employees.forEach(emp => {
-      tbody.innerHTML += `<tr><td>${emp.name}</td><td>${emp.role}</td></tr>`;
+      tbody.innerHTML += `
+        <tr>
+          <td>${emp.name}</td>
+          <td>${emp.role}</td>
+          <td><button class="btn-danger" onclick="deleteEmployee('${emp.firebaseId}')">حذف</button></td>
+        </tr>`;
     });
   }
-
-  // تشغيل عند البداية
-  renderPosGrid();
-  renderInventory();
-  renderEmployees();
 </script>
 
 </body>
-  </html>
-  
+          </html>
