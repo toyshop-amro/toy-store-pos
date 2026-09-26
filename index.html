@@ -3,30 +3,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نظام كاشير متجر الألعاب</title>
+  <title>نظام كاشير متجر الألعاب المطور</title>
   <style>
-    * { box-sizing: border-box; font-family: sans-serif; }
-    body { background-color: #f4f6f9; margin: 0; padding: 10px; direction: rtl; }
-    .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    h1 { text-align: center; color: #2c3e50; font-size: 20px; margin-bottom: 15px; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f0f2f5; margin: 0; padding: 10px; direction: rtl; }
+    .container { max-width: 1000px; margin: 0 auto; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
+    h1 { text-align: center; color: #2c3e50; font-size: 22px; margin-bottom: 15px; }
     
-    .nav-tabs { display: flex; gap: 5px; margin-bottom: 15px; border-bottom: 2px solid #ddd; overflow-x: auto; padding-bottom: 5px; }
-    .nav-tab { padding: 8px 12px; background: #e0e0e0; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 13px; white-space: nowrap; }
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 15px; border-bottom: 2px solid #eee; overflow-x: auto; padding-bottom: 8px; }
+    .nav-tab { padding: 10px 16px; background: #e9ecef; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; font-size: 14px; color: #495057; white-space: nowrap; }
     .nav-tab.active { background: #27ae60; color: white; }
     
     .tab-content { display: none; }
     .tab-content.active { display: block; }
 
-    .form-group { display: flex; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; align-items: center; }
-    input, select, button { padding: 8px 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 13px; }
-    input, select { flex: 1; min-width: 110px; }
+    /* شبكة المنتجات بالصور */
+    .products-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; margin-bottom: 20px; max-height: 300px; overflow-y: auto; padding: 5px; border: 1px solid #ddd; border-radius: 8px; }
+    .product-card { border: 1px solid #e0e0e0; border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; background: #fff; transition: transform 0.1s, box-shadow 0.1s; }
+    .product-card:active { transform: scale(0.98); }
+    .product-card:hover { box-shadow: 0 2px 8px rgba(0,0,0,0.15); border-color: #27ae60; }
+    .product-card img { width: 100%; height: 75px; object-fit: cover; border-radius: 6px; margin-bottom: 5px; }
+    .product-card .title { font-size: 12px; font-weight: bold; color: #333; margin-bottom: 3px; }
+    .product-card .cost-price { font-size: 11px; color: #7f8c8d; }
+
+    .form-group { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; align-items: center; background: #f8f9fa; padding: 10px; border-radius: 8px; }
+    input, select, button { padding: 9px 12px; border: 1px solid #ced4da; border-radius: 6px; font-size: 13px; }
+    input, select { flex: 1; min-width: 120px; }
     button { background-color: #27ae60; color: white; border: none; cursor: pointer; font-weight: bold; }
-    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
-    th, td { border: 1px solid #ddd; padding: 6px; text-align: center; vertical-align: middle; }
-    th { background-color: #34495e; color: white; }
-    .item-img { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; }
-    .total-box { font-size: 16px; font-weight: bold; text-align: left; margin-top: 10px; color: #c0392b; }
+    button:hover { opacity: 0.9; }
+    
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13px; }
+    th, td { border: 1px solid #dee2e6; padding: 8px; text-align: center; vertical-align: middle; }
+    th { background-color: #34495e; color: white; font-weight: 600; }
+    .cart-img { width: 45px; height: 45px; object-fit: cover; border-radius: 5px; }
+    
+    .total-box { font-size: 18px; font-weight: bold; text-align: left; margin-top: 15px; color: #c0392b; background: #fdf2f2; padding: 10px; border-radius: 6px; }
     .btn-danger { background-color: #e74c3c; }
+    .btn-primary { background-color: #2980b9; }
+
+    .summary-cards { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; }
+    .card-stat { flex: 1; min-width: 130px; background: #f8f9fa; padding: 12px; border-radius: 8px; text-align: center; border-top: 4px solid #27ae60; }
+    .card-stat h4 { margin: 0 0 5px 0; color: #6c757d; font-size: 12px; }
+    .card-stat p { margin: 0; font-size: 16px; font-weight: bold; color: #2c3e50; }
   </style>
 </head>
 <body>
@@ -35,65 +53,98 @@
   <h1>🧸 نظام إدارة متجر الألعاب</h1>
 
   <div class="nav-tabs">
-    <button class="nav-tab active" onclick="openTab(event, 'pos')">🛒 الكاشير</button>
-    <button class="nav-tab" onclick="openTab(event, 'inventory')">📦 المخزن والمنتجات</button>
+    <button class="nav-tab active" onclick="openTab(event, 'pos')">🛒 الكاشير والمبيعات</button>
+    <button class="nav-tab" onclick="openTab(event, 'inventory')">📦 المخزن والجملة</button>
+    <button class="nav-tab" onclick="openTab(event, 'reports')">📊 التقارير والأرباح</button>
     <button class="nav-tab" onclick="openTab(event, 'employees')">👥 الموظفين</button>
-    <button class="nav-tab" onclick="openTab(event, 'settings')">⚙️ الإعدادات</button>
   </div>
 
   <!-- قسم الكاشير -->
   <div id="pos" class="tab-content active">
-    <h3>تسجيل بيع جديد</h3>
-    <div class="form-group">
-      <input type="text" id="itemName" placeholder="اسم اللعبة">
-      <input type="number" id="itemPrice" placeholder="السعر">
-      <input type="number" id="itemQty" placeholder="الكمية" value="1">
-      <label style="font-size: 12px;">صورة الصنف:</label>
-      <input type="file" id="itemImg" accept="image/*" style="flex:none; width: 150px;">
-      <button onclick="addItem()">إضافة للفاتورة</button>
+    <h3>اختر المنتج للبيع:</h3>
+    <div class="products-grid" id="posProductsGrid">
+      <!-- يتم تحميل المنتجات هنا -->
     </div>
 
     <h3>الفاتورة الحالية</h3>
     <table>
       <thead>
-        <tr><th>الصورة</th><th>الصنف</th><th>السعر</th><th>الكمية</th><th>الإجمالي</th><th>إجراء</th></tr>
+        <tr><th>الصورة</th><th>الصنف</th><th>سعر التكلفة</th><th>سعر البيع</th><th>الكمية</th><th>الإجمالي</th><th>إجراء</th></tr>
       </thead>
       <tbody id="cartTable"></tbody>
     </table>
+    
     <div class="total-box">إجمالي الفاتورة: <span id="grandTotal">0.00</span> ج.م</div>
     <br>
-    <button onclick="clearCart()" class="btn-danger">إنهاء الفاتورة (جديد)</button>
+    <button onclick="checkoutCart()" class="btn-primary" style="font-size: 15px; padding: 12px 20px;">✅ حفظ وإتمام البيع</button>
+    <button onclick="clearCart()" class="btn-danger">إلغاء الفاتورة</button>
   </div>
 
-  <!-- قسم المخزن -->
+  <!-- قسم المخزن والجملة -->
   <div id="inventory" class="tab-content">
     <h3>إضافة صنف جديد للمخزن</h3>
     <div class="form-group">
-      <input type="text" id="prodName" placeholder="اسم المنتج">
-      <input type="number" id="prodPrice" placeholder="سعر البيع">
+      <input type="text" id="prodName" placeholder="اسم المنتج/اللعبة">
+      <input type="number" id="prodCost" placeholder="سعر الجملة (التكلفة عليك)">
+      <input type="number" id="prodSell" placeholder="سعر البيع المقترح">
       <input type="number" id="prodStock" placeholder="الكمية المتاحة">
-      <input type="file" id="prodImg" accept="image/*" style="flex:none; width: 150px;">
-      <button onclick="addInventory()">حفظ للمخزن</button>
+      <label style="font-size:12px;">الصورة:</label>
+      <input type="file" id="prodImg" accept="image/*" style="flex:none; width: 160px;">
+      <button onclick="addInventoryProduct()">إضافة للمخزن</button>
     </div>
-    <h3>الأصناف المسجلة</h3>
+
+    <h3>الأصناف المسجلة بالمخزن</h3>
     <table>
       <thead>
-        <tr><th>الصورة</th><th>المنتج</th><th>السعر</th><th>المخزون</th></tr>
+        <tr><th>الصورة</th><th>المنتج</th><th>سعر الجملة</th><th>سعر البيع المقترح</th><th>المخزون</th><th>إجراء</th></tr>
       </thead>
       <tbody id="inventoryTable"></tbody>
     </table>
   </div>
 
+  <!-- قسم التقارير والمبيعات -->
+  <div id="reports" class="tab-content">
+    <h3>ملخص حركة المبيعات</h3>
+    <div class="summary-cards">
+      <div class="card-stat">
+        <h4>إجمالي المبيعات</h4>
+        <p id="statSales">0.00 ج.م</p>
+      </div>
+      <div class="card-stat">
+        <h4>إجمالي التكلفة (الجملة)</h4>
+        <p id="statCost">0.00 ج.م</p>
+      </div>
+      <div class="card-stat" style="border-top-color: #27ae60;">
+        <h4>صافي الربح</h4>
+        <p id="statProfit">0.00 ج.م</p>
+      </div>
+      <div class="card-stat" style="border-top-color: #2980b9;">
+        <h4>عدد الفواتير</h4>
+        <p id="statOrders">0</p>
+      </div>
+    </div>
+
+    <h3>سجل الفواتير المباعة</h3>
+    <table>
+      <thead>
+        <tr><th>رقم الفاتورة</th><th>التاريخ والوقت</th><th>الإجمالي</th><th>التكلفة</th><th>الربح الصافي</th></tr>
+      </thead>
+      <tbody id="salesTable"></tbody>
+    </table>
+    <br>
+    <button onclick="window.print()" class="btn-primary">🖨️ طباعة التقرير</button>
+  </div>
+
   <!-- قسم الموظفين -->
   <div id="employees" class="tab-content">
-    <h3>إضافة موظف جديد</h3>
+    <h3>إضافة موظف</h3>
     <div class="form-group">
       <input type="text" id="empName" placeholder="اسم الموظف">
       <select id="empRole">
         <option value="كاشير">كاشير</option>
-        <option value="مدير">مدير محل</option>
+        <option value="مدير محل">مدير محل</option>
       </select>
-      <button onclick="addEmployee()">إضافة الموظف</button>
+      <button onclick="addEmployee()">حفظ الموظف</button>
     </div>
     <h3>قائمة الموظفين</h3>
     <table>
@@ -104,128 +155,253 @@
     </table>
   </div>
 
-  <!-- قسم الإعدادات -->
-  <div id="settings" class="tab-content">
-    <h3>إعدادات المحل</h3>
-    <div class="form-group">
-      <input type="text" id="shopName" placeholder="اسم المحل" value="متجر الألعاب">
-      <input type="text" id="shopPhone" placeholder="رقم الهاتف">
-      <button onclick="alert('تم حفظ الإعدادات بنجاح!')">حفظ الإعدادات</button>
-    </div>
-  </div>
-
 </div>
 
 <script>
+  // تهيئة البيانات والذاكرة
+  let inventory = JSON.parse(localStorage.getItem('inventory')) || [
+    { id: 1, name: 'دبدوب صغير', cost: 40, sell: 65, stock: 10, img: 'https://via.placeholder.com/80?text=🧸' },
+    { id: 2, name: 'سيارة بالريموت', cost: 120, sell: 180, stock: 5, img: 'https://via.placeholder.com/80?text=🏎️' }
+  ];
+  let cart = [];
+  let salesHistory = JSON.parse(localStorage.getItem('salesHistory')) || [];
+  let employees = JSON.parse(localStorage.getItem('employees')) || [];
+
+  function saveAll() {
+    localStorage.setItem('inventory', JSON.stringify(inventory));
+    localStorage.setItem('salesHistory', JSON.stringify(salesHistory));
+    localStorage.setItem('employees', JSON.stringify(employees));
+  }
+
   function openTab(evt, tabName) {
-    var i, tabcontent, tablinks;
-    tabcontent = document.getElementsByClassName("tab-content");
-    for (i = 0; i < tabcontent.length; i++) {
-      tabcontent[i].style.display = "none";
-    }
-    tablinks = document.getElementsByClassName("nav-tab");
-    for (i = 0; i < tablinks.length; i++) {
-      tablinks[i].className = tablinks[i].className.replace(" active", "");
-    }
+    let tabcontent = document.getElementsByClassName("tab-content");
+    for (let i = 0; i < tabcontent.length; i++) tabcontent[i].style.display = "none";
+    let tablinks = document.getElementsByClassName("nav-tab");
+    for (let i = 0; i < tablinks.length; i++) tablinks[i].className = tablinks[i].className.replace(" active", "");
     document.getElementById(tabName).style.display = "block";
     evt.currentTarget.className += " active";
+
+    if(tabName === 'pos') renderPosGrid();
+    if(tabName === 'inventory') renderInventory();
+    if(tabName === 'reports') renderReports();
   }
 
-  let cart = [];
-
-  function addItem() {
-    const name = document.getElementById('itemName').value;
-    const price = parseFloat(document.getElementById('itemPrice').value);
-    const qty = parseInt(document.getElementById('itemQty').value);
-    const imgInput = document.getElementById('itemImg');
-    
-    if(!name || isNaN(price)) return alert('أدخل بيانات صحيحة');
-
-    let imgSrc = 'https://via.placeholder.com/40?text=🎮';
-    if (imgInput.files && imgInput.files[0]) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        cart.push({ name, price, qty, total: price * qty, img: e.target.result });
-        renderCart();
-        resetPosInputs();
-      }
-      reader.readAsDataURL(imgInput.files[0]);
-    } else {
-      cart.push({ name, price, qty, total: price * qty, img: imgSrc });
-      renderCart();
-      resetPosInputs();
+  // --- الكاشير ---
+  function renderPosGrid() {
+    const grid = document.getElementById('posProductsGrid');
+    grid.innerHTML = '';
+    if(inventory.length === 0) {
+      grid.innerHTML = '<p style="grid-column: 1/-1; color:#888;">لا توجد منتجات بالمخزن، قم بإضافة أصناف من قسم المخزن أولاً.</p>';
+      return;
     }
+    inventory.forEach(prod => {
+      grid.innerHTML += `
+        <div class="product-card" onclick="selectProductToCart(${prod.id})">
+          <img src="${prod.img}">
+          <div class="title">${prod.name}</div>
+          <div class="cost-price">جملة: ${prod.cost} ج.م</div>
+        </div>
+      `;
+    });
   }
 
-  function resetPosInputs() {
-    document.getElementById('itemName').value = '';
-    document.getElementById('itemPrice').value = '';
-    document.getElementById('itemImg').value = '';
+  function selectProductToCart(id) {
+    const prod = inventory.find(p => p.id === id);
+    if(!prod) return;
+
+    let sellPrice = prompt(`تحديد سعر البيع لـ (${prod.name}):`, prod.sell);
+    if (sellPrice === null || sellPrice === "") return;
+    sellPrice = parseFloat(sellPrice);
+
+    let qty = prompt(`الكمية المباعة:`, "1");
+    if (qty === null || qty === "") return;
+    qty = parseInt(qty);
+
+    if (isNaN(sellPrice) || isNaN(qty) || qty <= 0) return alert('برجاء إدخال أرقام صحيحة');
+
+    cart.push({
+      id: prod.id,
+      name: prod.name,
+      cost: prod.cost,
+      sell: sellPrice,
+      qty: qty,
+      img: prod.img
+    });
+
+    renderCart();
   }
 
   function renderCart() {
     const tbody = document.getElementById('cartTable');
     tbody.innerHTML = '';
-    let total = 0;
-    cart.forEach((item, i) => {
-      total += item.total;
-      tbody.innerHTML += `<tr>
-        <td><img src="${item.img}" class="item-img"></td>
-        <td>${item.name}</td>
-        <td>${item.price}</td>
-        <td>${item.qty}</td>
-        <td>${item.total}</td>
-        <td><button class="btn-danger" onclick="cart.splice(${i},1);renderCart();">حذف</button></td>
-      </tr>`;
+    let grandTotal = 0;
+
+    cart.forEach((item, index) => {
+      let total = item.sell * item.qty;
+      grandTotal += total;
+      tbody.innerHTML += `
+        <tr>
+          <td><img src="${item.img}" class="cart-img"></td>
+          <td>${item.name}</td>
+          <td>${item.cost} ج.م</td>
+          <td>${item.sell} ج.م</td>
+          <td>${item.qty}</td>
+          <td>${total.toFixed(2)} ج.م</td>
+          <td><button class="btn-danger" onclick="cart.splice(${index},1); renderCart();">حذف</button></td>
+        </tr>
+      `;
     });
-    document.getElementById('grandTotal').innerText = total.toFixed(2);
+
+    document.getElementById('grandTotal').innerText = grandTotal.toFixed(2);
+  }
+
+  function checkoutCart() {
+    if(cart.length === 0) return alert('الفاتورة فارغة!');
+
+    let totalSales = 0;
+    let totalCost = 0;
+
+    cart.forEach(item => {
+      totalSales += item.sell * item.qty;
+      totalCost += item.cost * item.qty;
+
+      // تخصم الكمية من المخزون
+      let prod = inventory.find(p => p.id === item.id);
+      if(prod) prod.stock -= item.qty;
+    });
+
+    salesHistory.push({
+      id: Date.now(),
+      date: new Date().toLocaleString('ar-EG'),
+      totalSales: totalSales,
+      totalCost: totalCost,
+      profit: totalSales - totalCost
+    });
+
+    saveAll();
+    cart = [];
+    renderCart();
+    renderPosGrid();
+    alert('تم حفظ الفاتورة بنجاح وتحديث حركة المبيعات والمخزن!');
   }
 
   function clearCart() {
-    if(cart.length && confirm('إنهاء الفاتورة؟')) { cart = []; renderCart(); }
-  }
-
-  function addInventory() {
-    const name = document.getElementById('prodName').value;
-    const price = document.getElementById('prodPrice').value;
-    const stock = document.getElementById('prodStock').value;
-    const imgInput = document.getElementById('prodImg');
-    if(!name) return;
-
-    let imgSrc = 'https://via.placeholder.com/40?text=📦';
-    if (imgInput.files && imgInput.files[0]) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        appendInventoryRow(name, price, stock, e.target.result);
-      }
-      reader.readAsDataURL(imgInput.files[0]);
-    } else {
-      appendInventoryRow(name, price, stock, imgSrc);
+    if(confirm('هل تريد إلغاء الفاتورة بالحالية؟')) {
+      cart = [];
+      renderCart();
     }
   }
 
-  function appendInventoryRow(name, price, stock, img) {
-    document.getElementById('inventoryTable').innerHTML += `<tr>
-      <td><img src="${img}" class="item-img"></td>
-      <td>${name}</td>
-      <td>${price}</td>
-      <td>${stock}</td>
-    </tr>`;
-    document.getElementById('prodName').value = '';
-    document.getElementById('prodPrice').value = '';
-    document.getElementById('prodStock').value = '';
-    document.getElementById('prodImg').value = '';
+  // --- المخزن ---
+  function addInventoryProduct() {
+    const name = document.getElementById('prodName').value;
+    const cost = parseFloat(document.getElementById('prodCost').value);
+    const sell = parseFloat(document.getElementById('prodSell').value);
+    const stock = parseInt(document.getElementById('prodStock').value) || 0;
+    const imgInput = document.getElementById('prodImg');
+
+    if(!name || isNaN(cost)) return alert('برجاء كتابة الاسم وسعر الجملة بشكل صحيح');
+
+    let defaultImg = 'https://via.placeholder.com/80?text=🎮';
+
+    if (imgInput.files && imgInput.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        saveProductObj(name, cost, sell, stock, e.target.result);
+      }
+      reader.readAsDataURL(imgInput.files[0]);
+    } else {
+      saveProductObj(name, cost, sell, stock, defaultImg);
+    }
   }
 
+  function saveProductObj(name, cost, sell, stock, img) {
+    inventory.push({
+      id: Date.now(),
+      name, cost, sell: sell || cost, stock, img
+    });
+    saveAll();
+    renderInventory();
+    renderPosGrid();
+
+    document.getElementById('prodName').value = '';
+    document.getElementById('prodCost').value = '';
+    document.getElementById('prodSell').value = '';
+    document.getElementById('prodStock').value = '';
+    document.getElementById('prodImg').value = '';
+    alert('تمت إضافة المنتج بنجاح للمخزن!');
+  }
+
+  function renderInventory() {
+    const tbody = document.getElementById('inventoryTable');
+    tbody.innerHTML = '';
+    inventory.forEach((prod, index) => {
+      tbody.innerHTML += `
+        <tr>
+          <td><img src="${prod.img}" class="cart-img"></td>
+          <td>${prod.name}</td>
+          <td>${prod.cost} ج.م</td>
+          <td>${prod.sell} ج.م</td>
+          <td>${prod.stock}</td>
+          <td><button class="btn-danger" onclick="inventory.splice(${index},1); saveAll(); renderInventory();">حذف</button></td>
+        </tr>
+      `;
+    });
+  }
+
+  // --- التقارير ---
+  function renderReports() {
+    let salesSum = 0, costSum = 0, profitSum = 0;
+    const tbody = document.getElementById('salesTable');
+    tbody.innerHTML = '';
+
+    salesHistory.forEach((sale, i) => {
+      salesSum += sale.totalSales;
+      costSum += sale.totalCost;
+      profitSum += sale.profit;
+
+      tbody.innerHTML += `
+        <tr>
+          <td>#${i + 1}</td>
+          <td>${sale.date}</td>
+          <td>${sale.totalSales.toFixed(2)} ج.م</td>
+          <td>${sale.totalCost.toFixed(2)} ج.م</td>
+          <td style="color:green; font-weight:bold;">${sale.profit.toFixed(2)} ج.م</td>
+        </tr>
+      `;
+    });
+
+    document.getElementById('statSales').innerText = salesSum.toFixed(2) + ' ج.م';
+    document.getElementById('statCost').innerText = costSum.toFixed(2) + ' ج.م';
+    document.getElementById('statProfit').innerText = profitSum.toFixed(2) + ' ج.م';
+    document.getElementById('statOrders').innerText = salesHistory.length;
+  }
+
+  // --- الموظفين ---
   function addEmployee() {
     const name = document.getElementById('empName').value;
     const role = document.getElementById('empRole').value;
     if(!name) return;
-    document.getElementById('employeeTable').innerHTML += `<tr><td>${name}</td><td>${role}</td></tr>`;
+    employees.push({ name, role });
+    saveAll();
+    renderEmployees();
     document.getElementById('empName').value = '';
   }
+
+  function renderEmployees() {
+    const tbody = document.getElementById('employeeTable');
+    tbody.innerHTML = '';
+    employees.forEach(emp => {
+      tbody.innerHTML += `<tr><td>${emp.name}</td><td>${emp.role}</td></tr>`;
+    });
+  }
+
+  // تشغيل عند البداية
+  renderPosGrid();
+  renderInventory();
+  renderEmployees();
 </script>
 
 </body>
   </html>
-
+  
