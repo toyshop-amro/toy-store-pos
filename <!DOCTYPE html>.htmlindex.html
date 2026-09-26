@@ -1,29 +1,123 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>برنامج الكاشير</title>
-                <style>
-                        body { font-family: sans-serif; text-align: center; padding: 20px; background-color: #f4f4f9; }
-                                h1 { color: #333; }
-                                        .btn { background: #28a745; color: white; border: none; padding: 10px 20px; font-size: 18px; border-radius: 5px; cursor: pointer; }
-                                            </style>
-                                            </head>
-                                            <body>
-                                                <h1>مرحباً بك في برنامج الكاشير والمحاسبة</h1>
-                                                    <p>جاري تجهيز النظام...</p>
-                                                        <button class="btn">إضافة فاتورة جديدة</button>
-                                                        </body>
-                                                        </html>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>نقطة بيع متجر الألعاب</title>
+  <style>
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    body { background-color: #f4f6f9; margin: 0; padding: 15px; direction: rtl; }
+    .container { max-width: 900px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #2c3e50; margin-bottom: 20px; }
+    .section { margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
+    .form-group { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+    input, select, button { padding: 10px 14px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+    input { flex: 1; min-width: 130px; }
+    button { background-color: #27ae60; color: white; border: none; cursor: pointer; font-weight: bold; }
+    button:hover { background-color: #219150; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ddd; padding: 10px; text-align: center; }
+    th { background-color: #34495e; color: white; }
+    .total-box { font-size: 20px; font-weight: bold; text-align: left; margin-top: 15px; color: #c0392b; }
+    .btn-danger { background-color: #e74c3c; }
+    .btn-danger:hover { background-color: #c0392b; }
+  </style>
+</head>
+<body>
 
+<div class="container">
+  <h1>🧸 نقطة بيع متجر الألعاب</h1>
 
+  <!-- إضافة منتج فاتورة -->
+  <div class="section">
+    <h3>تسجيل بيع جديد</h3>
+    <div class="form-group">
+      <input type="text" id="itemName" placeholder="اسم اللعبة">
+      <input type="number" id="itemPrice" placeholder="السعر" step="0.5">
+      <input type="number" id="itemQty" placeholder="الكمية" value="1" min="1">
+      <button onclick="addItem()">إضافة للفاتورة</button>
+    </div>
+  </div>
 
+  <!-- جدول الفاتورة الحالية -->
+  <div class="section">
+    <h3>الفاتورة الحالية</h3>
+    <table>
+      <thead>
+        <tr>
+          <th>الصنف</th>
+          <th>السعر</th>
+          <th>الكمية</th>
+          <th>الإجمالي</th>
+          <th>إجراء</th>
+        </tr>
+      </thead>
+      <tbody id="cartTable">
+        <!-- تضاف الأغراض هنا -->
+      </tbody>
+    </table>
+    <div class="total-box">إجمالي الفاتورة: <span id="grandTotal">0.00</span> ج.م</div>
+    <br>
+    <button onclick="clearCart()" class="btn-danger">إنهاء الفاتورة (جديد)</button>
+  </div>
+</div>
 
+<script>
+  let cart = [];
 
+  function addItem() {
+    const name = document.getElementById('itemName').value.trim();
+    const price = parseFloat(document.getElementById('itemPrice').value);
+    const qty = parseInt(document.getElementById('itemQty').value);
 
+    if (!name || isNaN(price) || price <= 0 || isNaN(qty) || qty <= 0) {
+      alert('برجاء إدخال البيانات بصورة صحيحة');
+      return;
+    }
 
+    const itemTotal = price * qty;
+    cart.push({ name, price, qty, itemTotal });
+    updateCartUI();
 
+    document.getElementById('itemName').value = '';
+    document.getElementById('itemPrice').value = '';
+    document.getElementById('itemQty').value = '1';
+  }
 
+  function removeItem(index) {
+    cart.splice(index, 1);
+    updateCartUI();
+  }
 
-                                                        
+  function clearCart() {
+    if (cart.length === 0) return;
+    if (confirm('هل تريد إنهاء هذه الفاتورة وبدء فاتورة جديدة؟')) {
+      cart = [];
+      updateCartUI();
+    }
+  }
+
+  function updateCartUI() {
+    const tbody = document.getElementById('cartTable');
+    tbody.innerHTML = '';
+    let total = 0;
+
+    cart.forEach((item, index) => {
+      total += item.itemTotal;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${item.name}</td>
+        <td>${item.price.toFixed(2)}</td>
+        <td>${item.qty}</td>
+        <td>${item.itemTotal.toFixed(2)}</td>
+        <td><button class="btn-danger" onclick="removeItem(${index})">حذف</button></td>
+      `;
+      tbody.appendChild(tr);
+    });
+
+    document.getElementById('grandTotal').innerText = total.toFixed(2);
+  }
+</script>
+
+</body>
+</html>
