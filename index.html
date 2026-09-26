@@ -108,8 +108,11 @@
         <div class="form-group"><label>سعر البيع</label><input type="number" id="pPrice" placeholder="80"></div>
         <div class="form-group"><label>الكمية المتوفرة</label><input type="number" id="pStock" placeholder="10"></div>
         <div class="form-group" style="grid-column: 1/-1;">
-          <label>صورة المنتج (اختر صورة من الاستوديو)</label>
-          <input type="file" id="pImageFile" accept="image/*" onchange="previewImage(event)" style="padding: 7px; background: white;">
+          <label>صورة المنتج من الاستوديو</label>
+          <label for="pImageFile" class="btn btn-info" style="display: block; text-align: center; cursor: pointer; margin-bottom: 5px;">
+            📁 اختر صورة المنتج من الاستوديو
+          </label>
+          <input type="file" id="pImageFile" accept="image/*" onchange="previewImage(event)" style="display: none;">
           <div style="margin-top: 8px; text-align: center;">
             <img id="imgPreview" src="" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; display: none; border: 1px solid #ccc; margin: 0 auto;">
           </div>
@@ -284,7 +287,6 @@
 
     const id = editId ? editId : name.replace(/[^a-zA-Z0-91-9أ-ي]/g, '_');
 
-    // If editing and no new image chosen, keep old image
     if (!image && editId && products[editId]) {
       image = products[editId].image;
     }
@@ -542,4 +544,4 @@
   }
 </script>
 </body>
-    </html>
+                                  </html>
