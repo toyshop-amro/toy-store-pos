@@ -3,19 +3,20 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>نظام كاشير متجر الألعاب</title>
+  <title>نظام كاشير وإدارة متجر الألعاب الشامل</title>
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
     body { background-color: #f0f2f5; padding: 15px; color: #333; }
-    .container { max-width: 1100px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    h1 { text-align: center; color: #1a73e8; margin-bottom: 15px; font-size: 24px; }
+    .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+    h1 { text-align: center; color: #1a73e8; margin-bottom: 10px; font-size: 24px; }
     
-    .status-bar { text-align: center; padding: 8px; margin-bottom: 15px; border-radius: 6px; font-weight: bold; font-size: 14px; background-color: #e6f4ea; color: #137333; }
+    .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; margin-bottom: 15px; border-radius: 8px; font-weight: bold; font-size: 14px; background-color: #e6f4ea; color: #137333; flex-wrap: wrap; gap: 10px; }
 
-    .nav-tabs { display: flex; gap: 8px; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 10px; overflow-x: auto; }
+    .top-action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; flex-wrap: wrap; }
+    .nav-tabs { display: flex; gap: 8px; overflow-x: auto; }
     .nav-tab { padding: 10px 18px; background: #e4e6eb; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; transition: 0.2s; }
     .nav-tab.active { background: #1a73e8; color: white; }
-    .nav-tab.admin-only { border: 2px dashed #f9ab00; }
+    .btn-admin-lock { background: #d93025; color: white; border: none; border-radius: 8px; padding: 10px 18px; font-weight: bold; cursor: pointer; }
 
     .tab-content { display: none; }
     .tab-content.active { display: block; }
@@ -23,12 +24,23 @@
     .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
     @media (max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
 
+    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 15px; margin-bottom: 20px; }
+    .menu-card { background: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; transition: 0.2s; }
+    .menu-card:hover { border-color: #1a73e8; transform: translateY(-3px); background: #e8f0fe; }
+    .menu-card .icon { font-size: 32px; margin-bottom: 8px; }
+    .menu-card .title { font-weight: bold; font-size: 16px; color: #1a73e8; }
+
     .card { background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #dadce0; margin-bottom: 15px; }
     .card h3 { margin-bottom: 12px; color: #3c4043; border-bottom: 1px solid #ddd; padding-bottom: 5px; }
 
+    .stats-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; text-align: center; margin-bottom: 15px; }
+    .stat-item { padding: 12px; border-radius: 8px; background: #fff; border: 1px solid #ddd; }
+    .stat-item h4 { font-size: 13px; color: #5f6368; margin-bottom: 5px; }
+    .stat-item p { font-size: 18px; font-weight: bold; }
+
     .form-group { margin-bottom: 12px; }
     .form-group label { display: block; margin-bottom: 5px; font-size: 14px; font-weight: 600; }
-    .form-group input { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 15px; }
 
     .btn { width: 100%; padding: 12px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s; }
     .btn-primary { background: #1a73e8; color: white; }
@@ -50,7 +62,7 @@
     th { background: #f1f3f4; }
 
     .pin-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-    .pin-box { background: white; padding: 25px; border-radius: 12px; width: 300px; text-align: center; }
+    .pin-box { background: white; padding: 25px; border-radius: 12px; width: 320px; text-align: center; }
   </style>
 
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
@@ -59,18 +71,22 @@
 <body>
 
 <div class="container">
-  <h1>🧸 نظام كاشير متجر الألعاب</h1>
-  <div class="status-bar">⚡ متصل بالسيرفر السحابي بنجاح</div>
-
-  <div class="nav-tabs">
-    <button class="nav-tab active" onclick="switchTab('pos')">🛒 الكاشير (البيع)</button>
-    <button class="nav-tab admin-only" onclick="checkPinAndSwitch('inventory')">📦 المخزن 🔒</button>
-    <button class="nav-tab admin-only" onclick="checkPinAndSwitch('expenses')">💸 المصروفات 🔒</button>
-    <button class="nav-tab admin-only" onclick="checkPinAndSwitch('reports')">📊 التقارير 🔒</button>
-    <button class="nav-tab admin-only" onclick="checkPinAndSwitch('settings')">⚙️ الإعدادات 🔒</button>
+  <h1>🧸 نظام كاشير وإدارة متجر الألعاب</h1>
+  
+  <div class="status-bar">
+    <span>⚡ متصل بالسيرفر السحابي بنجاح</span>
+    <span>👤 الموظف الحالي: <strong id="activeEmpName">مدير النظام</strong></span>
+    <span>🔑 حالة الوردية: <strong id="shiftStatus" style="color: #137333;">مفتوحة</strong></span>
   </div>
 
-  <!-- TAB 1: POS -->
+  <div class="top-action-bar">
+    <div class="nav-tabs">
+      <button class="nav-tab active" id="btnPosTab" onclick="switchTab('pos')">🛒 الكاشير (البيع المباشر)</button>
+    </div>
+    <button class="btn-admin-lock" onclick="checkPinAndOpenAdmin()">🔐 الإعدادات والتقارير الشاملة (مقفل)</button>
+  </div>
+
+  <!-- TAB 1: POS - شاشة البيع المباشرة -->
   <div id="posTab" class="tab-content active">
     <div class="grid-layout">
       <div class="card">
@@ -97,113 +113,188 @@
     </div>
   </div>
 
-  <!-- TAB 2: INVENTORY -->
-  <div id="inventoryTab" class="tab-content">
-    <div class="card">
-      <h3 id="formTitle">إضافة منتج جديد بالمخزن</h3>
-      <input type="hidden" id="pEditId">
-      <input type="hidden" id="pImageBase64">
-      <div class="grid-layout">
-        <div class="form-group"><label>اسم اللعبة/المنتج</label><input type="text" id="pName" placeholder="مثال: عروسة باربي"></div>
-        <div class="form-group"><label>سعر الشراء (التكلفة)</label><input type="number" id="pCost" placeholder="50"></div>
-        <div class="form-group"><label>سعر البيع الافتراضي</label><input type="number" id="pPrice" placeholder="80"></div>
-        <div class="form-group"><label>الكمية المتوفرة</label><input type="number" id="pStock" placeholder="10"></div>
-        <div class="form-group" style="grid-column: 1/-1;">
-          <label>صورة المنتج من الاستوديو</label>
-          <label for="pImageFile" class="btn btn-info" style="display: block; text-align: center; cursor: pointer; margin-bottom: 5px;">
-            📁 اختر صورة المنتج من الاستوديو
-          </label>
-          <input type="file" id="pImageFile" accept="image/*" onchange="previewImage(event)" style="display: none;">
-          <div style="margin-top: 8px; text-align: center;">
-            <img id="imgPreview" src="" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; display: none; border: 1px solid #ccc; margin: 0 auto;">
+  <!-- ADMIN MAIN CONTAINER (الإعدادات الشاملة المقفولة برقم سري) -->
+  <div id="adminContainer" class="tab-content">
+    
+    <!-- لوحة الأيقونات المجمعة -->
+    <div class="dashboard-grid">
+      <div class="menu-card" onclick="openAdminSubTab('inventoryTab')">
+        <div class="icon">📦</div>
+        <div class="title">المخزون والجرد</div>
+      </div>
+      <div class="menu-card" onclick="openAdminSubTab('reportsTab')">
+        <div class="icon">📊</div>
+        <div class="title">التقارير الماليّة</div>
+      </div>
+      <div class="menu-card" onclick="openAdminSubTab('expensesTab')">
+        <div class="icon">💸</div>
+        <div class="title">المصروفات</div>
+      </div>
+      <div class="menu-card" onclick="openAdminSubTab('employeesTab')">
+        <div class="icon">👥</div>
+        <div class="title">الموظفين والورديات</div>
+      </div>
+      <div class="menu-card" onclick="openAdminSubTab('treasuryTab')">
+        <div class="icon">💰</div>
+        <div class="title">الخزنة والجرد</div>
+      </div>
+      <div class="menu-card" onclick="openAdminSubTab('settingsTab')">
+        <div class="icon">⚙️</div>
+        <div class="title">إعدادات النظام</div>
+      </div>
+    </div>
+
+    <!-- 1. المخزن والجرد الشامل -->
+    <div id="inventoryTab" class="admin-sub-tab">
+      <div class="card">
+        <h3 id="formTitle">إضافة منتج جديد بالمخزن</h3>
+        <input type="hidden" id="pEditId">
+        <input type="hidden" id="pImageBase64">
+        <div class="grid-layout">
+          <div class="form-group"><label>اسم اللعبة/المنتج</label><input type="text" id="pName" placeholder="مثال: عروسة باربي"></div>
+          <div class="form-group"><label>سعر الشراء (التكلفة)</label><input type="number" id="pCost" placeholder="50"></div>
+          <div class="form-group"><label>سعر البيع الافتراضي</label><input type="number" id="pPrice" placeholder="80"></div>
+          <div class="form-group"><label>الكمية المتوفرة</label><input type="number" id="pStock" placeholder="10"></div>
+          <div class="form-group" style="grid-column: 1/-1;">
+            <label>صورة المنتج من الاستوديو</label>
+            <label for="pImageFile" class="btn btn-info" style="display: block; text-align: center; cursor: pointer; margin-bottom: 5px;">
+              📁 اختر صورة المنتج من الاستوديو
+            </label>
+            <input type="file" id="pImageFile" accept="image/*" onchange="previewImage(event)" style="display: none;">
+            <div style="margin-top: 8px; text-align: center;">
+              <img id="imgPreview" src="" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; display: none; border: 1px solid #ccc; margin: 0 auto;">
+            </div>
           </div>
         </div>
+        <button id="saveBtn" class="btn btn-primary" onclick="saveProduct()">حفظ المنتج بالمخزن 💾</button>
+        <button id="cancelBtn" class="btn btn-danger" style="display:none; margin-top: 5px;" onclick="resetForm()">إلغاء التعديل ❌</button>
       </div>
-      <button id="saveBtn" class="btn btn-primary" onclick="saveProduct()">حفظ المنتج بالمخزن 💾</button>
-      <button id="cancelBtn" class="btn btn-danger" style="display:none; margin-top: 5px;" onclick="resetForm()">إلغاء التعديل ❌</button>
-    </div>
 
-    <div class="card">
-      <h3>المنتجات المسجلة بالمخزن</h3>
-      <div class="form-group" style="margin-bottom: 10px;">
-        <input type="text" id="invSearchInput" placeholder="🔍 ابحث عن منتج في المخزن..." oninput="renderInventory()">
-      </div>
-      <table>
-        <thead>
-          <tr><th>الصورة</th><th>الاسم</th><th>التكلفة</th><th>سعر البيع</th><th>الكمية</th><th>إجراءات</th></tr>
-        </thead>
-        <tbody id="inventoryBody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- TAB 3: EXPENSES -->
-  <div id="expensesTab" class="tab-content">
-    <div class="card">
-      <h3>تسجيل مصروف جديد</h3>
-      <div class="grid-layout">
-        <div class="form-group"><label>بند المصروف</label><input type="text" id="expTitle" placeholder="مثال: إيجار، كهرباء"></div>
-        <div class="form-group"><label>المبلغ (ج.م)</label><input type="number" id="expAmount" placeholder="100"></div>
-      </div>
-      <button class="btn btn-warning" onclick="addExpense()">تسجيل المصروف 💸</button>
-    </div>
-
-    <div class="card">
-      <h3>سجل المصروفات اليومية</h3>
-      <table>
-        <thead>
-          <tr><th>التاريخ</th><th>البند</th><th>المبلغ</th><th>حذف</th></tr>
-        </thead>
-        <tbody id="expensesBody"></tbody>
-      </table>
-    </div>
-  </div>
-
-  <!-- TAB 4: REPORTS -->
-  <div id="reportsTab" class="tab-content">
-    <div class="card">
-      <h3>الملخص المالي العام</h3>
-      <div class="grid-layout" style="text-align: center; margin-top: 10px;">
-        <div style="background: #e6f4ea; padding: 15px; border-radius: 8px;">
-          <h4>إجمالي المبيعات</h4>
-          <p id="repSales" style="font-size: 20px; font-weight: bold; color: #137333;">0 ج.م</p>
-        </div>
-        <div style="background: #feefc3; padding: 15px; border-radius: 8px;">
-          <h4>إجمالي المصروفات</h4>
-          <p id="repExpenses" style="font-size: 20px; font-weight: bold; color: #b06000;">0 ج.م</p>
-        </div>
-        <div style="background: #e8f0fe; padding: 15px; border-radius: 8px; grid-column: 1/-1;">
-          <h4>صافي الأرباح النهائي</h4>
-          <p id="repProfit" style="font-size: 24px; font-weight: bold; color: #1a73e8;">0 ج.م</p>
+      <div class="card">
+        <h3>📊 ملخص الجرد الشامل للمخزن</h3>
+        <div class="stats-box">
+          <div class="stat-item"><h4>إجمالي القطع بالمخزن</h4><p id="invTotalQty" style="color:#1a73e8;">0 قطعة</p></div>
+          <div class="stat-item"><h4>قيمة رأس المال (بالتكلفة)</h4><p id="invTotalCost" style="color:#b06000;">0 ج.م</p></div>
+          <div class="stat-item"><h4>قيمة البيع الإجمالية المتوقعة</h4><p id="invTotalSalesVal" style="color:#137333;">0 ج.م</p></div>
+          <div class="stat-item"><h4>الربح المتوقع بالمخزن</h4><p id="invTotalExpectedProfit" style="color:#1a73e8;">0 ج.م</p></div>
         </div>
       </div>
+
+      <div class="card">
+        <h3>المنتجات المسجلة بالمخزن</h3>
+        <div class="form-group" style="margin-bottom: 10px;">
+          <input type="text" id="invSearchInput" placeholder="🔍 ابحث عن منتج في المخزن..." oninput="renderInventory()">
+        </div>
+        <table>
+          <thead>
+            <tr><th>الصورة</th><th>الاسم</th><th>التكلفة</th><th>سعر البيع</th><th>الكمية</th><th>إجمالي التكلفة</th><th>إجراءات</th></tr>
+          </thead>
+          <tbody id="inventoryBody"></tbody>
+        </table>
+      </div>
     </div>
 
-    <div class="card">
-      <h3>سجل المبيعات والتفاصيل</h3>
-      <table>
-        <thead>
-          <tr><th>التاريخ</th><th>عدد المواد</th><th>الإجمالي</th></tr>
-        </thead>
-        <tbody id="salesBody"></tbody>
-      </table>
-    </div>
-  </div>
+    <!-- 2. التقارير والمالية -->
+    <div id="reportsTab" class="admin-sub-tab" style="display: none;">
+      <div class="card">
+        <h3>الملخص المالي العام</h3>
+        <div class="stats-box">
+          <div class="stat-item"><h4>إجمالي المبيعات</h4><p id="repSales" style="color: #137333;">0 ج.م</p></div>
+          <div class="stat-item"><h4>أرباح المبيعات (مجمل الربح)</h4><p id="repGrossProfit" style="color: #1a73e8;">0 ج.م</p></div>
+          <div class="stat-item"><h4>إجمالي المصروفات</h4><p id="repExpenses" style="color: #ea4335;">0 ج.م</p></div>
+          <div class="stat-item"><h4>صافي الأرباح النهائي</h4><p id="repProfit" style="color: #1a73e8;">0 ج.م</p></div>
+        </div>
+      </div>
 
-  <!-- TAB 5: SETTINGS -->
-  <div id="settingsTab" class="tab-content">
-    <div class="card" style="max-width: 500px; margin: 0 auto;">
-      <h3>تغيير كلمة سر المدير</h3>
-      <div class="form-group" style="margin-top: 15px;">
-        <label>كلمة السر الحالية</label>
-        <input type="password" id="currentPin" placeholder="أدخل الرقم الحالي">
+      <div class="card">
+        <h3>سجل المبيعات والتفاصيل</h3>
+        <table>
+          <thead>
+            <tr><th>التاريخ والوقت</th><th>الموظف</th><th>عدد المواد</th><th>الإجمالي</th><th>الربح</th></tr>
+          </thead>
+          <tbody id="salesBody"></tbody>
+        </table>
       </div>
-      <div class="form-group">
-        <label>كلمة السر الجديدة</label>
-        <input type="password" id="newPin" placeholder="أدخل الرقم الجديد">
-      </div>
-      <button class="btn btn-primary" style="margin-top: 10px;" onclick="changeAdminPin()">حفظ الرقم السري الجديد 🔑</button>
     </div>
+
+    <!-- 3. المصروفات -->
+    <div id="expensesTab" class="admin-sub-tab" style="display: none;">
+      <div class="card">
+        <h3>تسجيل مصروف جديد</h3>
+        <div class="grid-layout">
+          <div class="form-group"><label>بند المصروف</label><input type="text" id="expTitle" placeholder="مثال: إيجار، كهرباء"></div>
+          <div class="form-group"><label>المبلغ (ج.م)</label><input type="number" id="expAmount" placeholder="100"></div>
+        </div>
+        <button class="btn btn-warning" onclick="addExpense()">تسجيل المصروف 💸</button>
+      </div>
+
+      <div class="card">
+        <h3>سجل المصروفات اليومية</h3>
+        <table>
+          <thead>
+            <tr><th>التاريخ</th><th>البند</th><th>المبلغ</th><th>حذف</th></tr>
+          </thead>
+          <tbody id="expensesBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 4. الموظفين والورديات -->
+    <div id="employeesTab" class="admin-sub-tab" style="display: none;">
+      <div class="card">
+        <h3>إدارة وردية الموظف (الشيفت)</h3>
+        <div class="grid-layout">
+          <div class="form-group">
+            <label>اسم الموظف الحالي</label>
+            <input type="text" id="empNameInput" placeholder="أدخل اسم الموظف">
+          </div>
+          <div class="form-group">
+            <label>المبلغ الافتتاحي في الدرج (ج.م)</label>
+            <input type="number" id="shiftStartCash" placeholder="0">
+          </div>
+        </div>
+        <button class="btn btn-primary" onclick="startShift()">بدء وردية جديدة 🚀</button>
+      </div>
+
+      <div class="card">
+        <h3>تقرير المبيعات لكل موظف</h3>
+        <table>
+          <thead>
+            <tr><th>اسم الموظف</th><th>عدد العمليات</th><th>إجمالي مبيعات الموظف</th></tr>
+          </thead>
+          <tbody id="empReportBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 5. الخزنة والجرد -->
+    <div id="treasuryTab" class="admin-sub-tab" style="display: none;">
+      <div class="card">
+        <h3>جرد الخزنة والنقدية الحالية</h3>
+        <div class="stats-box">
+          <div class="stat-item"><h4>إجمالي المقبوضات (النقدية)</h4><p id="treasurySales" style="color: #137333;">0 ج.م</p></div>
+          <div class="stat-item"><h4>إجمالي المدفوعات (المصروفات)</h4><p id="treasuryExpenses" style="color: #ea4335;">0 ج.م</p></div>
+          <div class="stat-item"><h4>المبلغ الصافي المتوفر بالخزنة</h4><p id="treasuryNet" style="color: #1a73e8;">0 ج.م</p></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. الإعدادات -->
+    <div id="settingsTab" class="admin-sub-tab" style="display: none;">
+      <div class="card" style="max-width: 500px; margin: 0 auto;">
+        <h3>تغيير كلمة سر المدير</h3>
+        <div class="form-group" style="margin-top: 15px;">
+          <label>كلمة السر الحالية</label>
+          <input type="password" id="currentPin" placeholder="أدخل الرقم الحالي">
+        </div>
+        <div class="form-group">
+          <label>كلمة السر الجديدة</label>
+          <input type="password" id="newPin" placeholder="أدخل الرقم الجديد">
+        </div>
+        <button class="btn btn-primary" style="margin-top: 10px;" onclick="changeAdminPin()">حفظ الرقم السري الجديد 🔑</button>
+      </div>
+    </div>
+
   </div>
 </div>
 
@@ -225,11 +316,12 @@
   const db = firebase.database();
 
   let adminPin = "1234";
-  let targetTab = '';
+  let isAdminLoggedIn = false;
   let products = {};
   let cart = [];
   let sales = [];
   let expenses = [];
+  let activeEmployee = "مدير النظام";
 
   db.ref('settings/pin').on('value', (snapshot) => {
     if (snapshot.exists()) {
@@ -247,6 +339,7 @@
     const data = snapshot.val() || {};
     sales = Object.keys(data).map(k => data[k]);
     renderReports();
+    renderEmpReport();
   });
 
   db.ref('expenses').on('value', (snapshot) => {
@@ -256,8 +349,11 @@
     renderReports();
   });
 
-  function checkPinAndSwitch(tabName) {
-    targetTab = tabName;
+  function checkPinAndOpenAdmin() {
+    if (isAdminLoggedIn) {
+      switchTab('adminContainer');
+      return;
+    }
     document.getElementById('pinInput').value = '';
     document.getElementById('pinModal').style.display = 'flex';
   }
@@ -265,8 +361,9 @@
   function verifyPin() {
     const pin = document.getElementById('pinInput').value;
     if (pin === adminPin) {
+      isAdminLoggedIn = true;
       closePinModal();
-      switchTab(targetTab);
+      switchTab('adminContainer');
     } else {
       alert('كلمة السر خاطئة!');
     }
@@ -278,15 +375,30 @@
 
   function switchTab(tabName) {
     document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+    document.getElementById(tabName).classList.add('active');
     
-    document.getElementById(tabName + 'Tab').classList.add('active');
-    const buttons = document.querySelectorAll('.nav-tab');
-    buttons.forEach(btn => {
-      if (btn.getAttribute('onclick') && btn.getAttribute('onclick').includes(tabName)) {
-        btn.classList.add('active');
-      }
-    });
+    if (tabName === 'pos') {
+      document.getElementById('btnPosTab').classList.add('active');
+    } else {
+      document.getElementById('btnPosTab').classList.remove('active');
+    }
+  }
+
+  function openAdminSubTab(subTabId) {
+    document.querySelectorAll('.admin-sub-tab').forEach(t => t.style.display = 'none');
+    document.getElementById(subTabId).style.display = 'block';
+    window.scrollTo({ top: 300, behavior: 'smooth' });
+  }
+
+  function startShift() {
+    const emp = document.getElementById('empNameInput').value.trim();
+    if (!emp) {
+      alert('برجاء إدخال اسم الموظف');
+      return;
+    }
+    activeEmployee = emp;
+    document.getElementById('activeEmpName').innerText = activeEmployee;
+    alert('تم فتح وردية جديدة للموظف: ' + activeEmployee);
   }
 
   function changeAdminPin() {
@@ -298,7 +410,7 @@
       return;
     }
     if (!newP || newP.length < 3) {
-      alert('برجاء إدخال رقم سري جديد قوي (أكثر من رقمين)');
+      alert('برجاء إدخال رقم سري جديد قوي');
       return;
     }
 
@@ -349,7 +461,7 @@
 
     db.ref('products/' + id).set({ name, cost, price, stock, image }, (err) => {
       if (!err) {
-        alert(editId ? 'تم تحديث المنتج بنجاح! 🔄' : 'تم حفظ المنتج بنجاح! 💾');
+        alert(editId ? 'تم تحديث المنتج بنجاح! 🔄' : 'تم حفظ المنتج بالمخزن بنجاح! 💾');
         resetForm();
       }
     });
@@ -369,15 +481,13 @@
       const imgPre = document.getElementById('imgPreview');
       imgPre.src = p.image;
       imgPre.style.display = 'block';
-    } else {
-      document.getElementById('imgPreview').style.display = 'none';
     }
 
     document.getElementById('formTitle').innerText = 'تعديل المنتج: ' + p.name;
     document.getElementById('saveBtn').innerText = 'تحديث وتعديل المنتج 🔄';
     document.getElementById('saveBtn').className = 'btn btn-info';
     document.getElementById('cancelBtn').style.display = 'block';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    openAdminSubTab('inventoryTab');
   }
 
   function resetForm() {
@@ -407,11 +517,19 @@
     tbody.innerHTML = '';
     const query = document.getElementById('invSearchInput').value.trim().toLowerCase();
     
+    let totalQty = 0;
+    let totalCostVal = 0;
+    let totalSalesVal = 0;
+
     Object.keys(products).forEach(id => {
       const p = products[id];
-      if (query && !p.name.toLowerCase().includes(query)) {
-        return;
-      }
+      
+      totalQty += p.stock || 0;
+      totalCostVal += (p.cost || 0) * (p.stock || 0);
+      totalSalesVal += (p.price || 0) * (p.stock || 0);
+
+      if (query && !p.name.toLowerCase().includes(query)) return;
+
       tbody.innerHTML += `
         <tr>
           <td><img src="${p.image}" style="width:40px; height:40px; object-fit:cover; border-radius:4px;"></td>
@@ -419,6 +537,7 @@
           <td>${p.cost} ج.م</td>
           <td>${p.price} ج.م</td>
           <td>${p.stock}</td>
+          <td>${(p.cost || 0) * (p.stock || 0)} ج.م</td>
           <td>
             <button class="btn btn-info" style="padding: 4px 8px; font-size: 11px; margin-bottom: 3px;" onclick="editProduct('${id}')">تعديل ✏️</button>
             <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="deleteProduct('${id}')">حذف 🗑️</button>
@@ -426,6 +545,11 @@
         </tr>
       `;
     });
+
+    document.getElementById('invTotalQty').innerText = totalQty + ' قطعة';
+    document.getElementById('invTotalCost').innerText = totalCostVal + ' ج.م';
+    document.getElementById('invTotalSalesVal').innerText = totalSalesVal + ' ج.م';
+    document.getElementById('invTotalExpectedProfit').innerText = (totalSalesVal - totalCostVal) + ' ج.م';
   }
 
   function renderPosProducts() {
@@ -534,6 +658,7 @@
 
     const saleRecord = {
       timestamp: new Date().toLocaleString('ar-EG'),
+      employee: activeEmployee,
       itemsCount: cart.length,
       totalSales: totalSales,
       profit: totalSales - totalCost
@@ -608,8 +733,13 @@
     const netProfit = totalGrossProfit - totalExpensesSum;
 
     document.getElementById('repSales').innerText = totalSales + ' ج.م';
+    document.getElementById('repGrossProfit').innerText = totalGrossProfit + ' ج.م';
     document.getElementById('repExpenses').innerText = totalExpensesSum + ' ج.م';
     document.getElementById('repProfit').innerText = netProfit + ' ج.م';
+
+    document.getElementById('treasurySales').innerText = totalSales + ' ج.م';
+    document.getElementById('treasuryExpenses').innerText = totalExpensesSum + ' ج.م';
+    document.getElementById('treasuryNet').innerText = (totalSales - totalExpensesSum) + ' ج.م';
 
     const tbody = document.getElementById('salesBody');
     tbody.innerHTML = '';
@@ -617,14 +747,40 @@
       tbody.innerHTML += `
         <tr>
           <td>${s.timestamp}</td>
+          <td>${s.employee || 'غير محدد'}</td>
           <td>${s.itemsCount}</td>
           <td>${s.totalSales} ج.م</td>
+          <td>${s.profit} ج.م</td>
+        </tr>
+      `;
+    });
+  }
+
+  function renderEmpReport() {
+    const tbody = document.getElementById('empReportBody');
+    tbody.innerHTML = '';
+    
+    let empStats = {};
+    sales.forEach(s => {
+      let emp = s.employee || 'غير محدد';
+      if (!empStats[emp]) {
+        empStats[emp] = { count: 0, totalSales: 0 };
+      }
+      empStats[emp].count += 1;
+      empStats[emp].totalSales += s.totalSales || 0;
+    });
+
+    Object.keys(empStats).forEach(empName => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${empName}</td>
+          <td>${empStats[empName].count}</td>
+          <td>${empStats[empName].totalSales} ج.م</td>
         </tr>
       `;
     });
   }
 </script>
 </body>
-                                  </html>
-
-                                
+        </html>
+        
