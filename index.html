@@ -88,10 +88,27 @@
 
   <!-- TAB 1: POS - شاشة البيع المباشرة -->
   <div id="posTab" class="tab-content active">
+    <!-- اختيار الموظف السريع من شاشة البيع -->
+    <div class="card" style="margin-bottom: 15px; padding: 10px 15px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+        <div style="display: flex; align-items: center; gap: 10px; flex-grow: 1;">
+          <label style="font-weight: bold; white-space: nowrap;">👤 الموظف الموجود الآن:</label>
+          <select id="posEmployeeSelect" onchange="changeActiveEmployee(this.value)" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc; flex-grow: 1; max-width: 300px;">
+            <option value="مدير النظام">مدير النظام</option>
+          </select>
+        </div>
+        <span style="font-size: 12px; color: #666;">(يتم تسجيل الفواتير باسم الموظف المختار)</span>
+      </div>
+    </div>
+
     <div class="grid-layout">
       <div class="card">
         <h3>قائمة المنتجات (إضغط للإضافة)</h3>
-        <div id="productGrid" class="product-grid" style="margin-top: 10px;">
+        <!-- شريط البحث في شاشة الكاشير بره -->
+        <div class="form-group" style="margin-top: 10px; margin-bottom: 10px;">
+          <input type="text" id="posSearchInput" placeholder="🔍 ابحث عن لعبة أو منتج هنا..." oninput="renderPosProducts()">
+        </div>
+        <div id="productGrid" class="product-grid">
           <p style="text-align: center; grid-column: 1/-1;">جاري تحميل المنتجات...</p>
         </div>
       </div>
@@ -242,18 +259,28 @@
     <!-- 4. الموظفين والورديات -->
     <div id="employeesTab" class="admin-sub-tab" style="display: none;">
       <div class="card">
-        <h3>إدارة وردية الموظف (الشيفت)</h3>
+        <h3>إضافة موظف جديد ليعمل على التطبيق</h3>
         <div class="grid-layout">
           <div class="form-group">
-            <label>اسم الموظف الحالي</label>
-            <input type="text" id="empNameInput" placeholder="أدخل اسم الموظف">
+            <label>اسم الموظف الجديد</label>
+            <input type="text" id="newEmployeeName" placeholder="أدخل اسم الموظف">
           </div>
           <div class="form-group">
-            <label>المبلغ الافتتاحي في الدرج (ج.م)</label>
-            <input type="number" id="shiftStartCash" placeholder="0">
+            <label>رقم الهاتف / ملاحظات</label>
+            <input type="text" id="newEmployeeNote" placeholder="اختياري">
           </div>
         </div>
-        <button class="btn btn-primary" onclick="startShift()">بدء وردية جديدة 🚀</button>
+        <button class="btn btn-primary" onclick="addNewEmployee()">إضافة الموظف لقائمة النظام ➕</button>
+      </div>
+
+      <div class="card">
+        <h3>قائمة الموظفين المسجلين بالنظام</h3>
+        <table>
+          <thead>
+            <tr><th>اسم الموظف</th><th>الملاحظات</th><th>إجراءات</th></tr>
+          </thead>
+          <tbody id="employeesTableBody"></tbody>
+        </table>
       </div>
 
       <div class="card">
@@ -321,6 +348,7 @@
   let cart = [];
   let sales = [];
   let expenses = [];
+  let employees = {};
   let activeEmployee = "مدير النظام";
 
   db.ref('settings/pin').on('value', (snapshot) => {
@@ -347,6 +375,11 @@
     expenses = Object.keys(data).map(k => ({ id: k, ...data[k] }));
     renderExpenses();
     renderReports();
+  });
+
+  db.ref('employees').on('value', (snapshot) => {
+    employees = snapshot.val() || {};
+    renderEmployeesList();
   });
 
   function checkPinAndOpenAdmin() {
@@ -390,15 +423,57 @@
     window.scrollTo({ top: 300, behavior: 'smooth' });
   }
 
-  function startShift() {
-    const emp = document.getElementById('empNameInput').value.trim();
-    if (!emp) {
+  // إدارة الموظفين
+  function addNewEmployee() {
+    const empName = document.getElementById('newEmployeeName').value.trim();
+    const empNote = document.getElementById('newEmployeeNote').value.trim();
+
+    if (!empName) {
       alert('برجاء إدخال اسم الموظف');
       return;
     }
-    activeEmployee = emp;
+
+    const id = 'emp_' + Date.now();
+    db.ref('employees/' + id).set({ name: empName, note: empNote }, (err) => {
+      if (!err) {
+        alert('تمت إضافة الموظف بنجاح! 👤');
+        document.getElementById('newEmployeeName').value = '';
+        document.getElementById('newEmployeeNote').value = '';
+      }
+    });
+  }
+
+  function deleteEmployee(id) {
+    if (confirm('هل أنت متأكد من حذف هذا الموظف؟')) {
+      db.ref('employees/' + id).remove();
+    }
+  }
+
+  function renderEmployeesList() {
+    const select = document.getElementById('posEmployeeSelect');
+    const tbody = document.getElementById('employeesTableBody');
+    
+    select.innerHTML = '<option value="مدير النظام">مدير النظام</option>';
+    tbody.innerHTML = '';
+
+    Object.keys(employees).forEach(id => {
+      const emp = employees[id];
+      select.innerHTML += `<option value="${emp.name}">${emp.name}</option>`;
+      tbody.innerHTML += `
+        <tr>
+          <td>${emp.name}</td>
+          <td>${emp.note || '-'}</td>
+          <td><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteEmployee('${id}')">حذف</button></td>
+        </tr>
+      `;
+    });
+
+    select.value = activeEmployee;
+  }
+
+  function changeActiveEmployee(empName) {
+    activeEmployee = empName;
     document.getElementById('activeEmpName').innerText = activeEmployee;
-    alert('تم فتح وردية جديدة للموظف: ' + activeEmployee);
   }
 
   function changeAdminPin() {
@@ -555,6 +630,7 @@
   function renderPosProducts() {
     const grid = document.getElementById('productGrid');
     grid.innerHTML = '';
+    const query = document.getElementById('posSearchInput') ? document.getElementById('posSearchInput').value.trim().toLowerCase() : '';
     const keys = Object.keys(products);
 
     if (keys.length === 0) {
@@ -562,8 +638,12 @@
       return;
     }
     
+    let matchCount = 0;
     keys.forEach(id => {
       const p = products[id];
+      if (query && !p.name.toLowerCase().includes(query)) return;
+      
+      matchCount++;
       grid.innerHTML += `
         <div class="product-item" onclick="addToCart('${id}')">
           <img src="${p.image}" alt="${p.name}">
@@ -573,6 +653,10 @@
         </div>
       `;
     });
+
+    if (matchCount === 0) {
+      grid.innerHTML = '<p style="text-align: center; grid-column: 1/-1;">لا توجد نتائج مطابقة للبحث</p>';
+    }
   }
 
   function addToCart(id) {
@@ -782,5 +866,4 @@
   }
 </script>
 </body>
-        </html>
-        
+</html>
