@@ -4,6 +4,11 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نظام كاشير وإدارة متجر الألعاب الشامل</title>
+  
+  <!-- إعدادات العمل بدون إنترنت (PWA Manifest) -->
+  <link rel="manifest" href="data:application/manifest+json;utf8,{\"name\":\"نظام الكاشير\",\"short_name\":\"الكاشير\",\"start_url\":\".\",\"display\":\"standalone\",\"background_color\":\"#f0f2f5\",\"theme_color\":\"#1a73e8\"}">
+  <meta name="theme-color" content="#1a73e8">
+
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
     body { background-color: #f0f2f5; padding: 15px; color: #333; }
@@ -11,6 +16,7 @@
     h1 { text-align: center; color: #1a73e8; margin-bottom: 10px; font-size: 24px; }
     
     .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; margin-bottom: 15px; border-radius: 8px; font-weight: bold; font-size: 14px; background-color: #e6f4ea; color: #137333; flex-wrap: wrap; gap: 10px; }
+    .status-bar.offline { background-color: #fce8e6; color: #c5221f; }
 
     .top-action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; flex-wrap: wrap; }
     .nav-tabs { display: flex; gap: 8px; overflow-x: auto; }
@@ -73,10 +79,9 @@
 <div class="container">
   <h1>🧸 نظام كاشير وإدارة متجر الألعاب</h1>
   
-  <div class="status-bar">
-    <span>⚡ متصل بالسيرفر السحابي بنجاح</span>
+  <div id="netStatusBar" class="status-bar">
+    <span id="netStatusText">⚡ متصل بالسيرفر السحابي بنجاح</span>
     <span>👤 الموظف الحالي: <strong id="activeEmpName">مدير النظام</strong></span>
-    <span>🔑 حالة الوردية: <strong id="shiftStatus" style="color: #137333;">مفتوحة</strong></span>
   </div>
 
   <div class="top-action-bar">
@@ -104,7 +109,6 @@
     <div class="grid-layout">
       <div class="card">
         <h3>قائمة المنتجات (إضغط للإضافة)</h3>
-        <!-- شريط البحث في شاشة الكاشير بره -->
         <div class="form-group" style="margin-top: 10px; margin-bottom: 10px;">
           <input type="text" id="posSearchInput" placeholder="🔍 ابحث عن لعبة أو منتج هنا..." oninput="renderPosProducts()">
         </div>
@@ -336,51 +340,110 @@
 </div>
 
 <script>
+  // تفعيل الدعم الأوفلاين وحفظ الملفات محلياً (Service Worker)
+  if ('serviceWorker' in navigator) {
+    const swCode = `
+      const CACHE_NAME = 'pos-cache-v1';
+      self.addEventListener('install', (e) => {
+        self.skipWaiting();
+      });
+      self.addEventListener('fetch', (e) => {
+        e.respondWith(
+          fetch(e.request).catch(() => caches.match(e.request))
+        );
+      });
+    `;
+    const blob = new Blob([swCode], { type: 'text/javascript' });
+    const swUrl = URL.createObjectURL(blob);
+    navigator.serviceWorker.register(swUrl).catch(err => console.log('SW error:', err));
+  }
+
+  // تفعيل التخزين السحابي وحفظ نسخة محلية للأوفلاين (LocalStorage & Firebase Offline Persistence)
   const firebaseConfig = {
     databaseURL: "https://toyshop-pos-default-rtdb.firebaseio.com/"
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
+  
+  // تمكين الحفظ التلقائي عند انقطاع النت
+  try {
+    db.goOnline();
+  } catch(e) {}
 
-  let adminPin = "1234";
+  let adminPin = localStorage.getItem('local_admin_pin') || "1234";
   let isAdminLoggedIn = false;
-  let products = {};
+  let products = JSON.parse(localStorage.getItem('local_products')) || {};
   let cart = [];
-  let sales = [];
-  let expenses = [];
-  let employees = {};
+  let sales = JSON.parse(localStorage.getItem('local_sales')) || [];
+  let expenses = JSON.parse(localStorage.getItem('local_expenses')) || [];
+  let employees = JSON.parse(localStorage.getItem('local_employees')) || {};
   let activeEmployee = "مدير النظام";
+
+  // متابعة حالة الاتصال بالإنترنت
+  function updateOnlineStatus() {
+    const bar = document.getElementById('netStatusBar');
+    const txt = document.getElementById('netStatusText');
+    if (navigator.onLine) {
+      bar.className = 'status-bar';
+      txt.innerText = '⚡ متصل بالسيرفر السحابي بنجاح';
+    } else {
+      bar.className = 'status-bar offline';
+      txt.innerText = '📡 تعمل في وضع أوفلاين (بدون إنترنت - البيانات محفوظة محلياً)';
+    }
+  }
+  window.addEventListener('online', updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
 
   db.ref('settings/pin').on('value', (snapshot) => {
     if (snapshot.exists()) {
       adminPin = snapshot.val();
+      localStorage.setItem('local_admin_pin', adminPin);
     }
   });
 
   db.ref('products').on('value', (snapshot) => {
-    products = snapshot.val() || {};
-    renderInventory();
-    renderPosProducts();
+    if (snapshot.exists()) {
+      products = snapshot.val();
+      localStorage.setItem('local_products', JSON.stringify(products));
+      renderInventory();
+      renderPosProducts();
+    }
   });
 
   db.ref('sales').on('value', (snapshot) => {
-    const data = snapshot.val() || {};
-    sales = Object.keys(data).map(k => data[k]);
-    renderReports();
-    renderEmpReport();
+    if (snapshot.exists()) {
+      const data = snapshot.val() || {};
+      sales = Object.keys(data).map(k => data[k]);
+      localStorage.setItem('local_sales', JSON.stringify(sales));
+      renderReports();
+      renderEmpReport();
+    }
   });
 
   db.ref('expenses').on('value', (snapshot) => {
-    const data = snapshot.val() || {};
-    expenses = Object.keys(data).map(k => ({ id: k, ...data[k] }));
-    renderExpenses();
-    renderReports();
+    if (snapshot.exists()) {
+      const data = snapshot.val() || {};
+      expenses = Object.keys(data).map(k => ({ id: k, ...data[k] }));
+      localStorage.setItem('local_expenses', JSON.stringify(expenses));
+      renderExpenses();
+      renderReports();
+    }
   });
 
   db.ref('employees').on('value', (snapshot) => {
-    employees = snapshot.val() || {};
-    renderEmployeesList();
+    if (snapshot.exists()) {
+      employees = snapshot.val();
+      localStorage.setItem('local_employees', JSON.stringify(employees));
+      renderEmployeesList();
+    }
   });
+
+  // التشغيل الأولي من البيانات المحلية إن لم يتوفر إنترنت
+  updateOnlineStatus();
+  renderInventory();
+  renderPosProducts();
+  renderEmployeesList();
+  renderReports();
 
   function checkPinAndOpenAdmin() {
     if (isAdminLoggedIn) {
@@ -423,7 +486,6 @@
     window.scrollTo({ top: 300, behavior: 'smooth' });
   }
 
-  // إدارة الموظفين
   function addNewEmployee() {
     const empName = document.getElementById('newEmployeeName').value.trim();
     const empNote = document.getElementById('newEmployeeNote').value.trim();
@@ -434,25 +496,32 @@
     }
 
     const id = 'emp_' + Date.now();
-    db.ref('employees/' + id).set({ name: empName, note: empNote }, (err) => {
-      if (!err) {
-        alert('تمت إضافة الموظف بنجاح! 👤');
-        document.getElementById('newEmployeeName').value = '';
-        document.getElementById('newEmployeeNote').value = '';
-      }
-    });
+    employees[id] = { name: empName, note: empNote };
+    localStorage.setItem('local_employees', JSON.stringify(employees));
+    renderEmployeesList();
+
+    if (navigator.onLine) {
+      db.ref('employees/' + id).set({ name: empName, note: empNote });
+    }
+    alert('تمت إضافة الموظف بنجاح! 👤');
+    document.getElementById('newEmployeeName').value = '';
+    document.getElementById('newEmployeeNote').value = '';
   }
 
   function deleteEmployee(id) {
     if (confirm('هل أنت متأكد من حذف هذا الموظف؟')) {
-      db.ref('employees/' + id).remove();
+      delete employees[id];
+      localStorage.setItem('local_employees', JSON.stringify(employees));
+      renderEmployeesList();
+      if (navigator.onLine) db.ref('employees/' + id).remove();
     }
   }
 
   function renderEmployeesList() {
     const select = document.getElementById('posEmployeeSelect');
     const tbody = document.getElementById('employeesTableBody');
-    
+    if (!select || !tbody) return;
+
     select.innerHTML = '<option value="مدير النظام">مدير النظام</option>';
     tbody.innerHTML = '';
 
@@ -489,13 +558,12 @@
       return;
     }
 
-    db.ref('settings/pin').set(newP, (err) => {
-      if (!err) {
-        alert('تم تغيير كلمة السر بنجاح! 🔑');
-        document.getElementById('currentPin').value = '';
-        document.getElementById('newPin').value = '';
-      }
-    });
+    adminPin = newP;
+    localStorage.setItem('local_admin_pin', adminPin);
+    if (navigator.onLine) db.ref('settings/pin').set(newP);
+    alert('تم تغيير كلمة السر بنجاح! 🔑');
+    document.getElementById('currentPin').value = '';
+    document.getElementById('newPin').value = '';
   }
 
   function previewImage(event) {
@@ -534,12 +602,18 @@
       image = 'https://via.placeholder.com/60?text=Toy';
     }
 
-    db.ref('products/' + id).set({ name, cost, price, stock, image }, (err) => {
-      if (!err) {
-        alert(editId ? 'تم تحديث المنتج بنجاح! 🔄' : 'تم حفظ المنتج بالمخزن بنجاح! 💾');
-        resetForm();
-      }
-    });
+    const prodData = { name, cost, price, stock, image };
+    products[id] = prodData;
+    localStorage.setItem('local_products', JSON.stringify(products));
+
+    if (navigator.onLine) {
+      db.ref('products/' + id).set(prodData);
+    }
+
+    renderInventory();
+    renderPosProducts();
+    alert(editId ? 'تم تحديث المنتج بنجاح! 🔄' : 'تم حفظ المنتج بالمخزن بنجاح! 💾');
+    resetForm();
   }
 
   function editProduct(id) {
@@ -583,12 +657,17 @@
 
   function deleteProduct(id) {
     if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
-      db.ref('products/' + id).remove();
+      delete products[id];
+      localStorage.setItem('local_products', JSON.stringify(products));
+      renderInventory();
+      renderPosProducts();
+      if (navigator.onLine) db.ref('products/' + id).remove();
     }
   }
 
   function renderInventory() {
     const tbody = document.getElementById('inventoryBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
     const query = document.getElementById('invSearchInput').value.trim().toLowerCase();
     
@@ -629,6 +708,7 @@
 
   function renderPosProducts() {
     const grid = document.getElementById('productGrid');
+    if (!grid) return;
     grid.innerHTML = '';
     const query = document.getElementById('posSearchInput') ? document.getElementById('posSearchInput').value.trim().toLowerCase() : '';
     const keys = Object.keys(products);
@@ -694,6 +774,7 @@
 
   function renderCart() {
     const tbody = document.getElementById('cartBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
     let total = 0;
     cart.forEach((item, index) => {
@@ -737,8 +818,15 @@
     cart.forEach(item => {
       totalSales += item.price * item.qty;
       totalCost += item.cost * item.qty;
-      db.ref('products/' + item.id + '/stock').transaction(current => (current || 0) - item.qty);
+      if (products[item.id]) {
+        products[item.id].stock = (products[item.id].stock || 0) - item.qty;
+      }
+      if (navigator.onLine) {
+        db.ref('products/' + item.id + '/stock').transaction(current => (current || 0) - item.qty);
+      }
     });
+
+    localStorage.setItem('local_products', JSON.stringify(products));
 
     const saleRecord = {
       timestamp: new Date().toLocaleString('ar-EG'),
@@ -748,13 +836,19 @@
       profit: totalSales - totalCost
     };
 
-    db.ref('sales').push(saleRecord, (err) => {
-      if (!err) {
-        alert('تمت عملية البيع بنجاح! 🧾');
-        cart = [];
-        renderCart();
-      }
-    });
+    sales.push(saleRecord);
+    localStorage.setItem('local_sales', JSON.stringify(sales));
+
+    if (navigator.onLine) {
+      db.ref('sales').push(saleRecord);
+    }
+
+    alert('تمت عملية البيع بنجاح! 🧾');
+    cart = [];
+    renderCart();
+    renderInventory();
+    renderPosProducts();
+    renderReports();
   }
 
   function addExpense() {
@@ -766,27 +860,40 @@
       return;
     }
 
-    db.ref('expenses').push({
+    const expData = {
+      id: 'exp_' + Date.now(),
       title: title,
       amount: amount,
       timestamp: new Date().toLocaleString('ar-EG')
-    }, (err) => {
-      if (!err) {
-        alert('تم تسجيل المصروف بنجاح!');
-        document.getElementById('expTitle').value = '';
-        document.getElementById('expAmount').value = '';
-      }
-    });
+    };
+
+    expenses.push(expData);
+    localStorage.setItem('local_expenses', JSON.stringify(expenses));
+
+    if (navigator.onLine) {
+      db.ref('expenses').push(expData);
+    }
+
+    alert('تم تسجيل المصروف بنجاح!');
+    document.getElementById('expTitle').value = '';
+    document.getElementById('expAmount').value = '';
+    renderExpenses();
+    renderReports();
   }
 
   function deleteExpense(id) {
     if (confirm('هل تريد حذف هذا المصروف؟')) {
-      db.ref('expenses/' + id).remove();
+      expenses = expenses.filter(e => e.id !== id);
+      localStorage.setItem('local_expenses', JSON.stringify(expenses));
+      renderExpenses();
+      renderReports();
+      if (navigator.onLine) db.ref('expenses/' + id).remove();
     }
   }
 
   function renderExpenses() {
     const tbody = document.getElementById('expensesBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
     expenses.forEach(e => {
       tbody.innerHTML += `
@@ -816,16 +923,17 @@
 
     const netProfit = totalGrossProfit - totalExpensesSum;
 
-    document.getElementById('repSales').innerText = totalSales + ' ج.م';
-    document.getElementById('repGrossProfit').innerText = totalGrossProfit + ' ج.م';
-    document.getElementById('repExpenses').innerText = totalExpensesSum + ' ج.م';
-    document.getElementById('repProfit').innerText = netProfit + ' ج.م';
+    if (document.getElementById('repSales')) document.getElementById('repSales').innerText = totalSales + ' ج.م';
+    if (document.getElementById('repGrossProfit')) document.getElementById('repGrossProfit').innerText = totalGrossProfit + ' ج.م';
+    if (document.getElementById('repExpenses')) document.getElementById('repExpenses').innerText = totalExpensesSum + ' ج.م';
+    if (document.getElementById('repProfit')) document.getElementById('repProfit').innerText = netProfit + ' ج.م';
 
-    document.getElementById('treasurySales').innerText = totalSales + ' ج.م';
-    document.getElementById('treasuryExpenses').innerText = totalExpensesSum + ' ج.م';
-    document.getElementById('treasuryNet').innerText = (totalSales - totalExpensesSum) + ' ج.م';
+    if (document.getElementById('treasurySales')) document.getElementById('treasurySales').innerText = totalSales + ' ج.م';
+    if (document.getElementById('treasuryExpenses')) document.getElementById('treasuryExpenses').innerText = totalExpensesSum + ' ج.م';
+    if (document.getElementById('treasuryNet')) document.getElementById('treasuryNet').innerText = (totalSales - totalExpensesSum) + ' ج.م';
 
     const tbody = document.getElementById('salesBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
     sales.slice().reverse().forEach(s => {
       tbody.innerHTML += `
@@ -842,6 +950,7 @@
 
   function renderEmpReport() {
     const tbody = document.getElementById('empReportBody');
+    if (!tbody) return;
     tbody.innerHTML = '';
     
     let empStats = {};
@@ -866,4 +975,5 @@
   }
 </script>
 </body>
-</html>
+  </html>
+  
