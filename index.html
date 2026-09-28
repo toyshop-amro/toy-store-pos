@@ -4,11 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>نظام كاشير وإدارة متجر الألعاب الشامل</title>
-  
-  <!-- إعدادات العمل بدون إنترنت (PWA Manifest) -->
-  <link rel="manifest" href="data:application/manifest+json;utf8,{\"name\":\"نظام الكاشير\",\"short_name\":\"الكاشير\",\"start_url\":\".\",\"display\":\"standalone\",\"background_color\":\"#f0f2f5\",\"theme_color\":\"#1a73e8\"}">
-  <meta name="theme-color" content="#1a73e8">
-
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
     body { background-color: #f0f2f5; padding: 15px; color: #333; }
@@ -16,7 +11,6 @@
     h1 { text-align: center; color: #1a73e8; margin-bottom: 10px; font-size: 24px; }
     
     .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; margin-bottom: 15px; border-radius: 8px; font-weight: bold; font-size: 14px; background-color: #e6f4ea; color: #137333; flex-wrap: wrap; gap: 10px; }
-    .status-bar.offline { background-color: #fce8e6; color: #c5221f; }
 
     .top-action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; gap: 10px; flex-wrap: wrap; }
     .nav-tabs { display: flex; gap: 8px; overflow-x: auto; }
@@ -93,7 +87,6 @@
 
   <!-- TAB 1: POS - شاشة البيع المباشرة -->
   <div id="posTab" class="tab-content active">
-    <!-- اختيار الموظف السريع من شاشة البيع -->
     <div class="card" style="margin-bottom: 15px; padding: 10px 15px;">
       <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
         <div style="display: flex; align-items: center; gap: 10px; flex-grow: 1;">
@@ -134,10 +127,8 @@
     </div>
   </div>
 
-  <!-- ADMIN MAIN CONTAINER (الإعدادات الشاملة المقفولة برقم سري) -->
+  <!-- ADMIN MAIN CONTAINER -->
   <div id="adminContainer" class="tab-content">
-    
-    <!-- لوحة الأيقونات المجمعة -->
     <div class="dashboard-grid">
       <div class="menu-card" onclick="openAdminSubTab('inventoryTab')">
         <div class="icon">📦</div>
@@ -172,18 +163,21 @@
         <input type="hidden" id="pEditId">
         <input type="hidden" id="pImageBase64">
         <div class="grid-layout">
-          <div class="form-group"><label>اسم اللعبة/المنتج</label><input type="text" id="pName" placeholder="مثال: عروسة باربي"></div>
-          <div class="form-group"><label>سعر الشراء (التكلفة)</label><input type="number" id="pCost" placeholder="50"></div>
-          <div class="form-group"><label>سعر البيع الافتراضي</label><input type="number" id="pPrice" placeholder="80"></div>
-          <div class="form-group"><label>الكمية المتوفرة</label><input type="number" id="pStock" placeholder="10"></div>
+          <div class="form-group" style="grid-column: 1/-1;">
+            <label style="color: #1a73e8; font-weight: bold;">اسم اللعبة / المنتج</label>
+            <input type="text" id="pName" placeholder="مثال: كلب، عروسة...">
+          </div>
+          <div class="form-group"><label>سعر الشراء (التكلفة)</label><input type="number" id="pCost" placeholder="75"></div>
+          <div class="form-group"><label>سعر البيع الافتراضي</label><input type="number" id="pPrice" placeholder="100"></div>
+          <div class="form-group" style="grid-column: 1/-1;"><label>الكمية المتوفرة</label><input type="number" id="pStock" placeholder="100"></div>
           <div class="form-group" style="grid-column: 1/-1;">
             <label>صورة المنتج من الاستوديو</label>
             <label for="pImageFile" class="btn btn-info" style="display: block; text-align: center; cursor: pointer; margin-bottom: 5px;">
               📁 اختر صورة المنتج من الاستوديو
             </label>
-            <input type="file" id="pImageFile" accept="image/*" onchange="previewImage(event)" style="display: none;">
+            <input type="file" id="pImageFile" accept="image/*" onchange="previewImageCompressed(event)" style="display: none;">
             <div style="margin-top: 8px; text-align: center;">
-              <img id="imgPreview" src="" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; display: none; border: 1px solid #ccc; margin: 0 auto;">
+              <img id="imgPreview" src="" style="width: 80px; height: 80px; object-fit: cover; border-radius: 6px; display: none; border: 1px solid #ccc; margin: 0 auto;">
             </div>
           </div>
         </div>
@@ -215,7 +209,7 @@
       </div>
     </div>
 
-    <!-- 2. التقارير والمالية -->
+    <!-- 2. التقارير -->
     <div id="reportsTab" class="admin-sub-tab" style="display: none;">
       <div class="card">
         <h3>الملخص المالي العام</h3>
@@ -260,7 +254,7 @@
       </div>
     </div>
 
-    <!-- 4. الموظفين والورديات -->
+    <!-- 4. الموظفين -->
     <div id="employeesTab" class="admin-sub-tab" style="display: none;">
       <div class="card">
         <h3>إضافة موظف جديد ليعمل على التطبيق</h3>
@@ -298,7 +292,7 @@
       </div>
     </div>
 
-    <!-- 5. الخزنة والجرد -->
+    <!-- 5. الخزنة -->
     <div id="treasuryTab" class="admin-sub-tab" style="display: none;">
       <div class="card">
         <h3>جرد الخزنة والنقدية الحالية</h3>
@@ -340,35 +334,11 @@
 </div>
 
 <script>
-  // تفعيل الدعم الأوفلاين وحفظ الملفات محلياً (Service Worker)
-  if ('serviceWorker' in navigator) {
-    const swCode = `
-      const CACHE_NAME = 'pos-cache-v1';
-      self.addEventListener('install', (e) => {
-        self.skipWaiting();
-      });
-      self.addEventListener('fetch', (e) => {
-        e.respondWith(
-          fetch(e.request).catch(() => caches.match(e.request))
-        );
-      });
-    `;
-    const blob = new Blob([swCode], { type: 'text/javascript' });
-    const swUrl = URL.createObjectURL(blob);
-    navigator.serviceWorker.register(swUrl).catch(err => console.log('SW error:', err));
-  }
-
-  // تفعيل التخزين السحابي وحفظ نسخة محلية للأوفلاين (LocalStorage & Firebase Offline Persistence)
   const firebaseConfig = {
     databaseURL: "https://toyshop-pos-default-rtdb.firebaseio.com/"
   };
   firebase.initializeApp(firebaseConfig);
   const db = firebase.database();
-  
-  // تمكين الحفظ التلقائي عند انقطاع النت
-  try {
-    db.goOnline();
-  } catch(e) {}
 
   let adminPin = localStorage.getItem('local_admin_pin') || "1234";
   let isAdminLoggedIn = false;
@@ -378,21 +348,6 @@
   let expenses = JSON.parse(localStorage.getItem('local_expenses')) || [];
   let employees = JSON.parse(localStorage.getItem('local_employees')) || {};
   let activeEmployee = "مدير النظام";
-
-  // متابعة حالة الاتصال بالإنترنت
-  function updateOnlineStatus() {
-    const bar = document.getElementById('netStatusBar');
-    const txt = document.getElementById('netStatusText');
-    if (navigator.onLine) {
-      bar.className = 'status-bar';
-      txt.innerText = '⚡ متصل بالسيرفر السحابي بنجاح';
-    } else {
-      bar.className = 'status-bar offline';
-      txt.innerText = '📡 تعمل في وضع أوفلاين (بدون إنترنت - البيانات محفوظة محلياً)';
-    }
-  }
-  window.addEventListener('online', updateOnlineStatus);
-  window.addEventListener('offline', updateOnlineStatus);
 
   db.ref('settings/pin').on('value', (snapshot) => {
     if (snapshot.exists()) {
@@ -438,8 +393,6 @@
     }
   });
 
-  // التشغيل الأولي من البيانات المحلية إن لم يتوفر إنترنت
-  updateOnlineStatus();
   renderInventory();
   renderPosProducts();
   renderEmployeesList();
@@ -486,95 +439,26 @@
     window.scrollTo({ top: 300, behavior: 'smooth' });
   }
 
-  function addNewEmployee() {
-    const empName = document.getElementById('newEmployeeName').value.trim();
-    const empNote = document.getElementById('newEmployeeNote').value.trim();
-
-    if (!empName) {
-      alert('برجاء إدخال اسم الموظف');
-      return;
-    }
-
-    const id = 'emp_' + Date.now();
-    employees[id] = { name: empName, note: empNote };
-    localStorage.setItem('local_employees', JSON.stringify(employees));
-    renderEmployeesList();
-
-    if (navigator.onLine) {
-      db.ref('employees/' + id).set({ name: empName, note: empNote });
-    }
-    alert('تمت إضافة الموظف بنجاح! 👤');
-    document.getElementById('newEmployeeName').value = '';
-    document.getElementById('newEmployeeNote').value = '';
-  }
-
-  function deleteEmployee(id) {
-    if (confirm('هل أنت متأكد من حذف هذا الموظف؟')) {
-      delete employees[id];
-      localStorage.setItem('local_employees', JSON.stringify(employees));
-      renderEmployeesList();
-      if (navigator.onLine) db.ref('employees/' + id).remove();
-    }
-  }
-
-  function renderEmployeesList() {
-    const select = document.getElementById('posEmployeeSelect');
-    const tbody = document.getElementById('employeesTableBody');
-    if (!select || !tbody) return;
-
-    select.innerHTML = '<option value="مدير النظام">مدير النظام</option>';
-    tbody.innerHTML = '';
-
-    Object.keys(employees).forEach(id => {
-      const emp = employees[id];
-      select.innerHTML += `<option value="${emp.name}">${emp.name}</option>`;
-      tbody.innerHTML += `
-        <tr>
-          <td>${emp.name}</td>
-          <td>${emp.note || '-'}</td>
-          <td><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteEmployee('${id}')">حذف</button></td>
-        </tr>
-      `;
-    });
-
-    select.value = activeEmployee;
-  }
-
-  function changeActiveEmployee(empName) {
-    activeEmployee = empName;
-    document.getElementById('activeEmpName').innerText = activeEmployee;
-  }
-
-  function changeAdminPin() {
-    const current = document.getElementById('currentPin').value;
-    const newP = document.getElementById('newPin').value.trim();
-
-    if (current !== adminPin) {
-      alert('كلمة السر الحالية غير صحيحة!');
-      return;
-    }
-    if (!newP || newP.length < 3) {
-      alert('برجاء إدخال رقم سري جديد قوي');
-      return;
-    }
-
-    adminPin = newP;
-    localStorage.setItem('local_admin_pin', adminPin);
-    if (navigator.onLine) db.ref('settings/pin').set(newP);
-    alert('تم تغيير كلمة السر بنجاح! 🔑');
-    document.getElementById('currentPin').value = '';
-    document.getElementById('newPin').value = '';
-  }
-
-  function previewImage(event) {
+  // ضغط حجم صورة الاستوديو تلقائياً لكي لا تُثقل البرنامج
+  function previewImageCompressed(event) {
     const file = event.target.files[0];
     if (file) {
       const reader = new FileReader();
       reader.onload = function(e) {
-        document.getElementById('pImageBase64').value = e.target.result;
-        const imgPre = document.getElementById('imgPreview');
-        imgPre.src = e.target.result;
-        imgPre.style.display = 'block';
+        const img = new Image();
+        img.src = e.target.result;
+        img.onload = function() {
+          const canvas = document.createElement('canvas');
+          const ctx = canvas.getContext('2d');
+          canvas.width = 120;
+          canvas.height = 120;
+          ctx.drawImage(img, 0, 0, 120, 120);
+          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+          document.getElementById('pImageBase64').value = compressedBase64;
+          const imgPre = document.getElementById('imgPreview');
+          imgPre.src = compressedBase64;
+          imgPre.style.display = 'block';
+        }
       }
       reader.readAsDataURL(file);
     }
@@ -588,12 +472,17 @@
     const stock = parseInt(document.getElementById('pStock').value) || 0;
     let image = document.getElementById('pImageBase64').value;
 
-    if (!name || price <= 0) {
-      alert('برجاء إدخال اسم المنتج وسعر البيع بشكل صحيح');
+    if (!name) {
+      alert('⚠️ يرجى كتابة اسم المنتج أو اللعبة أولاً!');
       return;
     }
 
-    const id = editId ? editId : name.replace(/[^a-zA-Z0-91-9أ-ي]/g, '_');
+    if (price <= 0) {
+      alert('⚠️ يرجى كتابة سعر بيع صحيح أكبر من 0!');
+      return;
+    }
+
+    const id = editId ? editId : 'p_' + Date.now();
 
     if (!image && editId && products[editId]) {
       image = products[editId].image;
@@ -606,13 +495,15 @@
     products[id] = prodData;
     localStorage.setItem('local_products', JSON.stringify(products));
 
-    if (navigator.onLine) {
-      db.ref('products/' + id).set(prodData);
-    }
+    db.ref('products/' + id).set(prodData, (err) => {
+      if (!err) {
+        console.log('Saved to Firebase successfully');
+      }
+    });
 
     renderInventory();
     renderPosProducts();
-    alert(editId ? 'تم تحديث المنتج بنجاح! 🔄' : 'تم حفظ المنتج بالمخزن بنجاح! 💾');
+    alert('✅ تم حفظ المنتج بنجاح بالمخزن!');
     resetForm();
   }
 
@@ -626,7 +517,7 @@
     document.getElementById('pStock').value = p.stock;
     document.getElementById('pImageBase64').value = p.image;
     
-    if (p.image && p.image.startsWith('data:image')) {
+    if (p.image) {
       const imgPre = document.getElementById('imgPreview');
       imgPre.src = p.image;
       imgPre.style.display = 'block';
@@ -637,6 +528,7 @@
     document.getElementById('saveBtn').className = 'btn btn-info';
     document.getElementById('cancelBtn').style.display = 'block';
     openAdminSubTab('inventoryTab');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
   function resetForm() {
@@ -661,7 +553,7 @@
       localStorage.setItem('local_products', JSON.stringify(products));
       renderInventory();
       renderPosProducts();
-      if (navigator.onLine) db.ref('products/' + id).remove();
+      db.ref('products/' + id).remove();
     }
   }
 
@@ -821,9 +713,7 @@
       if (products[item.id]) {
         products[item.id].stock = (products[item.id].stock || 0) - item.qty;
       }
-      if (navigator.onLine) {
-        db.ref('products/' + item.id + '/stock').transaction(current => (current || 0) - item.qty);
-      }
+      db.ref('products/' + item.id + '/stock').transaction(current => (current || 0) - item.qty);
     });
 
     localStorage.setItem('local_products', JSON.stringify(products));
@@ -838,10 +728,7 @@
 
     sales.push(saleRecord);
     localStorage.setItem('local_sales', JSON.stringify(sales));
-
-    if (navigator.onLine) {
-      db.ref('sales').push(saleRecord);
-    }
+    db.ref('sales').push(saleRecord);
 
     alert('تمت عملية البيع بنجاح! 🧾');
     cart = [];
@@ -869,10 +756,7 @@
 
     expenses.push(expData);
     localStorage.setItem('local_expenses', JSON.stringify(expenses));
-
-    if (navigator.onLine) {
-      db.ref('expenses').push(expData);
-    }
+    db.ref('expenses').push(expData);
 
     alert('تم تسجيل المصروف بنجاح!');
     document.getElementById('expTitle').value = '';
@@ -887,7 +771,7 @@
       localStorage.setItem('local_expenses', JSON.stringify(expenses));
       renderExpenses();
       renderReports();
-      if (navigator.onLine) db.ref('expenses/' + id).remove();
+      db.ref('expenses/' + id).remove();
     }
   }
 
@@ -973,7 +857,85 @@
       `;
     });
   }
+
+  function addNewEmployee() {
+    const empName = document.getElementById('newEmployeeName').value.trim();
+    const empNote = document.getElementById('newEmployeeNote').value.trim();
+
+    if (!empName) {
+      alert('برجاء إدخال اسم الموظف');
+      return;
+    }
+
+    const id = 'emp_' + Date.now();
+    employees[id] = { name: empName, note: empNote };
+    localStorage.setItem('local_employees', JSON.stringify(employees));
+    renderEmployeesList();
+    db.ref('employees/' + id).set({ name: empName, note: empNote });
+
+    alert('تمت إضافة الموظف بنجاح! 👤');
+    document.getElementById('newEmployeeName').value = '';
+    document.getElementById('newEmployeeNote').value = '';
+  }
+
+  function deleteEmployee(id) {
+    if (confirm('هل أنت متأكد من حذف هذا الموظف؟')) {
+      delete employees[id];
+      localStorage.setItem('local_employees', JSON.stringify(employees));
+      renderEmployeesList();
+      db.ref('employees/' + id).remove();
+    }
+  }
+
+  function renderEmployeesList() {
+    const select = document.getElementById('posEmployeeSelect');
+    const tbody = document.getElementById('employeesTableBody');
+    if (!select || !tbody) return;
+
+    select.innerHTML = '<option value="مدير النظام">مدير النظام</option>';
+    tbody.innerHTML = '';
+
+    Object.keys(employees).forEach(id => {
+      const emp = employees[id];
+      select.innerHTML += `<option value="${emp.name}">${emp.name}</option>`;
+      tbody.innerHTML += `
+        <tr>
+          <td>${emp.name}</td>
+          <td>${emp.note || '-'}</td>
+          <td><button class="btn btn-danger" style="padding: 2px 6px; font-size: 11px;" onclick="deleteEmployee('${id}')">حذف</button></td>
+        </tr>
+      `;
+    });
+
+    select.value = activeEmployee;
+  }
+
+  function changeActiveEmployee(empName) {
+    activeEmployee = empName;
+    document.getElementById('activeEmpName').innerText = activeEmployee;
+  }
+
+  function changeAdminPin() {
+    const current = document.getElementById('currentPin').value;
+    const newP = document.getElementById('newPin').value.trim();
+
+    if (current !== adminPin) {
+      alert('كلمة السر الحالية غير صحيحة!');
+      return;
+    }
+    if (!newP || newP.length < 3) {
+      alert('برجاء إدخال رقم سري جديد قوي');
+      return;
+    }
+
+    adminPin = newP;
+    localStorage.setItem('local_admin_pin', adminPin);
+    db.ref('settings/pin').set(newP);
+    alert('تم تغيير كلمة السر بنجاح! 🔑');
+    document.getElementById('currentPin').value = '';
+    document.getElementById('newPin').value = '';
+  }
 </script>
 </body>
-  </html>
-  
+            </html>
+            
