@@ -3,617 +3,166 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>نظام كاشير وإدارة متجر الألعاب</title>
+  <title>كاشير متجر الألعاب</title>
   
-  <!-- إعدادات الشاشة الكاملة وتحويل الموقع لتطبيق مستقل -->
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="theme-color" content="#1a73e8">
-  
-  <!-- ملف PWA Manifest لجعل التطبيق يفتح بدون شريط المتصفح -->
-  <link rel="manifest" href="data:application/manifest+json;utf8,{\"name\":\"كاشير الألعاب\",\"short_name\":\"الكاشير\",\"start_url\":\".\",\"display\":\"standalone\",\"background_color\":\"#f0f2f5\",\"theme_color\":\"#1a73e8\",\"orientation\":\"portrait\"}">
+  <link rel="manifest" href="./manifest.json">
+
+  <!-- مكتبة ماسح الباركوود بالكاميرا -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
-    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
-    body { background-color: #f0f2f5; padding: 10px; color: #333; -webkit-tap-highlight-color: transparent; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; }
+    body { background-color: #f0f2f5; padding: 10px; color: #333; }
     .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
     h1 { text-align: center; color: #1a73e8; margin-bottom: 12px; font-size: 22px; }
     
-    .status-bar { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; margin-bottom: 12px; border-radius: 8px; font-weight: bold; font-size: 13px; background-color: #e6f4ea; color: #137333; flex-wrap: wrap; gap: 8px; }
-
-    .top-action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; gap: 8px; flex-wrap: wrap; }
-    .nav-tabs { display: flex; gap: 6px; overflow-x: auto; }
-    .nav-tab { padding: 10px 14px; background: #e4e6eb; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; white-space: nowrap; transition: 0.2s; font-size: 14px; }
-    .nav-tab.active { background: #1a73e8; color: white; }
-    .btn-admin-lock { background: #d93025; color: white; border: none; border-radius: 8px; padding: 10px 14px; font-weight: bold; cursor: pointer; font-size: 14px; }
-
-    .tab-content { display: none; }
-    .tab-content.active { display: block; }
-
     .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
     @media (max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
-
-    .dashboard-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; margin-bottom: 15px; }
-    .menu-card { background: #f8f9fa; border: 2px solid #e0e0e0; border-radius: 10px; padding: 12px; text-align: center; cursor: pointer; transition: 0.2s; }
-    .menu-card:hover { border-color: #1a73e8; background: #e8f0fe; }
-    .menu-card .icon { font-size: 26px; margin-bottom: 4px; }
-    .menu-card .title { font-weight: bold; font-size: 14px; color: #1a73e8; }
 
     .card { background: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #dadce0; margin-bottom: 12px; }
     .card h3 { margin-bottom: 10px; color: #3c4043; border-bottom: 1px solid #ddd; padding-bottom: 5px; font-size: 16px; }
 
-    .stats-box { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 8px; text-align: center; margin-bottom: 12px; }
-    .stat-item { padding: 8px; border-radius: 8px; background: #fff; border: 1px solid #ddd; }
-    .stat-item h4 { font-size: 11px; color: #5f6368; margin-bottom: 3px; }
-    .stat-item p { font-size: 15px; font-weight: bold; }
-
     .form-group { margin-bottom: 10px; }
     .form-group label { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 600; }
-    .form-group input, .form-group select { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+    .form-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
 
-    .btn { width: 100%; padding: 11px; border: none; border-radius: 6px; font-size: 15px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+    .btn { width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
     .btn-primary { background: #1a73e8; color: white; }
     .btn-success { background: #34a853; color: white; }
     .btn-danger { background: #ea4335; color: white; }
     .btn-warning { background: #f9ab00; color: white; }
-    .btn-info { background: #17a2b8; color: white; }
 
-    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 8px; max-height: 380px; overflow-y: auto; padding: 4px; }
-    .product-item { background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; justify-content: space-between; }
-    .product-item:hover { border-color: #1a73e8; transform: translateY(-2px); }
-    .product-item img { width: 55px; height: 55px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; background: #eee; }
-    .product-item .name { font-weight: bold; margin-bottom: 2px; font-size: 12px; }
-    .product-item .price { color: #137333; font-weight: bold; font-size: 12px; }
-    .product-item .stock { font-size: 10px; color: #70757a; }
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; max-height: 350px; overflow-y: auto; }
+    .product-item { background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; }
 
     table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
-    th, td { border: 1px solid #dadce0; padding: 6px; text-align: center; vertical-align: middle; }
+    th, td { border: 1px solid #dadce0; padding: 6px; text-align: center; }
     th { background: #f1f3f4; }
-
-    .pin-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; }
-    .pin-box { background: white; padding: 20px; border-radius: 12px; width: 300px; text-align: center; }
+    .edit-input { width: 55px; text-align: center; padding: 4px; border: 1px solid #1a73e8; border-radius: 4px; font-size: 13px; }
+    #reader { width: 100%; max-width: 350px; margin: 10px auto; display: none; border: 2px solid #1a73e8; border-radius: 8px; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>🧸 نظام كاشير وإدارة متجر الألعاب</h1>
-  
-  <div class="status-bar">
-    <span>⚡ التطبيق متصل ويعمل بنجاح</span>
-    <span>👤 الموظف الحالي: <strong id="activeEmpName">مدير النظام</strong></span>
+  <h1>🧸 كاشير متجر الألعاب الاحترافي</h1>
+
+  <div class="card" style="text-align: center;">
+    <button class="btn btn-warning" onclick="toggleScanner()">📷 مسح باركوود بالكاميرا</button>
+    <div id="reader"></div>
   </div>
 
-  <div class="top-action-bar">
-    <div class="nav-tabs">
-      <button class="nav-tab active" id="btnPosTab" onclick="switchTab('pos')">🛒 الكاشير (البيع المباشر)</button>
-    </div>
-    <button class="btn-admin-lock" onclick="checkPinAndOpenAdmin()">🔐 الإعدادات والتقارير الشاملة (مقفل)</button>
-  </div>
-
-  <!-- TAB 1: POS - شاشة البيع المباشرة -->
-  <div id="posTab" class="tab-content active">
-    <div class="card" style="margin-bottom: 12px; padding: 8px 12px;">
-      <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-        <div style="display: flex; align-items: center; gap: 8px; flex-grow: 1;">
-          <label style="font-weight: bold; white-space: nowrap; font-size: 13px;">👤 الموظف الموجود الآن:</label>
-          <select id="posEmployeeSelect" onchange="changeActiveEmployee(this.value)" style="padding: 6px; border-radius: 6px; border: 1px solid #ccc; flex-grow: 1; max-width: 250px;">
-            <option value="مدير النظام">مدير النظام</option>
-          </select>
-        </div>
+  <div class="grid-layout">
+    <div class="card">
+      <h3>المنتجات (اضغط للإضافة)</h3>
+      <div class="form-group">
+        <input type="text" id="searchInput" placeholder="🔍 بحث باسم اللعبة أو الباركوود..." oninput="renderProducts()">
       </div>
+      <div id="productGrid" class="product-grid"></div>
     </div>
 
+    <div class="card">
+      <h3>🛒 السلة والفاتورة (تعديل السعر والعدد)</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>المنتج</th>
+            <th>العدد</th>
+            <th>سعر البيع</th>
+            <th>الإجمالي</th>
+            <th>حذف</th>
+          </tr>
+        </thead>
+        <tbody id="cartBody"></tbody>
+      </table>
+      
+      <div style="margin-top: 15px; font-size: 18px; font-weight: bold; display: flex; justify-content: space-between;">
+        <span>إجمالي الفاتورة:</span>
+        <span id="cartTotal" style="color: #137333;">0 ج.م</span>
+      </div>
+      <button class="btn btn-success" style="margin-top: 10px;" onclick="checkout()">إتمام الفاتورة والبيع 🧾</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top: 15px;">
+    <h3>إضافة منتج جديد للمخزن</h3>
     <div class="grid-layout">
-      <div class="card">
-        <h3>قائمة المنتجات (إضغط للإضافة)</h3>
-        <div class="form-group" style="margin-top: 8px; margin-bottom: 8px;">
-          <input type="text" id="posSearchInput" placeholder="🔍 ابحث عن لعبة أو منتج هنا..." oninput="renderPosProducts()">
-        </div>
-        <div id="productGrid" class="product-grid">
-          <p style="text-align: center; grid-column: 1/-1;">جاري تحميل المنتجات...</p>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>سلة الشراء الحالية</h3>
-        <table>
-          <thead>
-            <tr><th>المنتج</th><th>العدد</th><th>السعر</th><th>الإجمالي</th><th>حذف</th></tr>
-          </thead>
-          <tbody id="cartBody"></tbody>
-        </table>
-        <div style="margin-top: 12px; font-size: 16px; font-weight: bold; display: flex; justify-content: space-between;">
-          <span>الإجمالي الكلي:</span>
-          <span id="cartTotal" style="color: #137333;">0 ج.م</span>
-        </div>
-        <button class="btn btn-success" style="margin-top: 12px;" onclick="checkout()">إتمام عملية البيع 🧾</button>
-      </div>
+      <div class="form-group"><label>اسم اللعبة</label><input type="text" id="pName"></div>
+      <div class="form-group"><label>الباركوود (اختياري)</label><input type="text" id="pBarcode"></div>
+      <div class="form-group"><label>سعر البيع الافتراضي</label><input type="number" id="pPrice"></div>
     </div>
-  </div>
-
-  <!-- ADMIN MAIN CONTAINER -->
-  <div id="adminContainer" class="tab-content">
-    <div class="dashboard-grid">
-      <div class="menu-card" onclick="openAdminSubTab('inventoryTab')">
-        <div class="icon">📦</div>
-        <div class="title">المخزون والجرد</div>
-      </div>
-      <div class="menu-card" onclick="openAdminSubTab('reportsTab')">
-        <div class="icon">📊</div>
-        <div class="title">التقارير الماليّة</div>
-      </div>
-      <div class="menu-card" onclick="openAdminSubTab('expensesTab')">
-        <div class="icon">💸</div>
-        <div class="title">المصروفات</div>
-      </div>
-      <div class="menu-card" onclick="openAdminSubTab('employeesTab')">
-        <div class="icon">👥</div>
-        <div class="title">الموظفين</div>
-      </div>
-      <div class="menu-card" onclick="openAdminSubTab('treasuryTab')">
-        <div class="icon">💰</div>
-        <div class="title">الخزنة والجرد</div>
-      </div>
-      <div class="menu-card" onclick="openAdminSubTab('settingsTab')">
-        <div class="icon">⚙️</div>
-        <div class="title">إعدادات النظام</div>
-      </div>
-    </div>
-
-    <!-- 1. المخزن والجرد الشامل -->
-    <div id="inventoryTab" class="admin-sub-tab">
-      <div class="card">
-        <h3 id="formTitle">إضافة منتج جديد بالمخزن</h3>
-        <input type="hidden" id="pEditId">
-        <input type="hidden" id="pImageBase64">
-        <div class="grid-layout">
-          <div class="form-group" style="grid-column: 1/-1;">
-            <label style="color: #1a73e8; font-weight: bold;">اسم اللعبة / المنتج</label>
-            <input type="text" id="pName" placeholder="مثال: كلب، عروسة...">
-          </div>
-          <div class="form-group"><label>سعر الشراء (التكلفة)</label><input type="number" id="pCost" placeholder="75"></div>
-          <div class="form-group"><label>سعر البيع الافتراضي</label><input type="number" id="pPrice" placeholder="100"></div>
-          <div class="form-group" style="grid-column: 1/-1;"><label>الكمية المتوفرة</label><input type="number" id="pStock" placeholder="100"></div>
-          <div class="form-group" style="grid-column: 1/-1;">
-            <label>صورة المنتج من الاستوديو</label>
-            <label for="pImageFile" class="btn btn-info" style="display: block; text-align: center; cursor: pointer; margin-bottom: 5px;">
-              📁 اختر صورة المنتج من الاستوديو
-            </label>
-            <input type="file" id="pImageFile" accept="image/*" onchange="previewImageCompressed(event)" style="display: none;">
-            <div style="margin-top: 6px; text-align: center;">
-              <img id="imgPreview" src="" style="width: 70px; height: 70px; object-fit: cover; border-radius: 6px; display: none; border: 1px solid #ccc; margin: 0 auto;">
-            </div>
-          </div>
-        </div>
-        <button id="saveBtn" class="btn btn-primary" onclick="saveProduct()">حفظ المنتج بالمخزن 💾</button>
-        <button id="cancelBtn" class="btn btn-danger" style="display:none; margin-top: 5px;" onclick="resetForm()">إلغاء التعديل ❌</button>
-      </div>
-
-      <div class="card">
-        <h3>📊 ملخص الجرد الشامل للمخزن</h3>
-        <div class="stats-box">
-          <div class="stat-item"><h4>إجمالي القطع بالمخزن</h4><p id="invTotalQty" style="color:#1a73e8;">0 قطعة</p></div>
-          <div class="stat-item"><h4>قيمة رأس المال (بالتكلفة)</h4><p id="invTotalCost" style="color:#b06000;">0 ج.م</p></div>
-          <div class="stat-item"><h4>قيمة البيع الإجمالية المتوقعة</h4><p id="invTotalSalesVal" style="color:#137333;">0 ج.م</p></div>
-          <div class="stat-item"><h4>الربح المتوقع بالمخزن</h4><p id="invTotalExpectedProfit" style="color:#1a73e8;">0 ج.م</p></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>المنتجات المسجلة بالمخزن</h3>
-        <div class="form-group" style="margin-bottom: 8px;">
-          <input type="text" id="invSearchInput" placeholder="🔍 ابحث عن منتج في المخزن..." oninput="renderInventory()">
-        </div>
-        <table>
-          <thead>
-            <tr><th>الصورة</th><th>الاسم</th><th>التكلفة</th><th>سعر البيع</th><th>الكمية</th><th>إجمالي التكلفة</th><th>إجراءات</th></tr>
-          </thead>
-          <tbody id="inventoryBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 2. التقارير -->
-    <div id="reportsTab" class="admin-sub-tab" style="display: none;">
-      <div class="card">
-        <h3>الملخص المالي العام</h3>
-        <div class="stats-box">
-          <div class="stat-item"><h4>إجمالي المبيعات</h4><p id="repSales" style="color: #137333;">0 ج.م</p></div>
-          <div class="stat-item"><h4>أرباح المبيعات</h4><p id="repGrossProfit" style="color: #1a73e8;">0 ج.م</p></div>
-          <div class="stat-item"><h4>إجمالي المصروفات</h4><p id="repExpenses" style="color: #ea4335;">0 ج.م</p></div>
-          <div class="stat-item"><h4>صافي الأرباح النهائي</h4><p id="repProfit" style="color: #1a73e8;">0 ج.م</p></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <h3>سجل المبيعات والتفاصيل</h3>
-        <table>
-          <thead>
-            <tr><th>التاريخ والوقت</th><th>الموظف</th><th>عدد المواد</th><th>الإجمالي</th><th>الربح</th></tr>
-          </thead>
-          <tbody id="salesBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 3. المصروفات -->
-    <div id="expensesTab" class="admin-sub-tab" style="display: none;">
-      <div class="card">
-        <h3>تسجيل مصروف جديد</h3>
-        <div class="grid-layout">
-          <div class="form-group"><label>بند المصروف</label><input type="text" id="expTitle" placeholder="مثال: إيجار، كهرباء"></div>
-          <div class="form-group"><label>المبلغ (ج.م)</label><input type="number" id="expAmount" placeholder="100"></div>
-        </div>
-        <button class="btn btn-warning" onclick="addExpense()">تسجيل المصروف 💸</button>
-      </div>
-
-      <div class="card">
-        <h3>سجل المصروفات اليومية</h3>
-        <table>
-          <thead>
-            <tr><th>التاريخ</th><th>البند</th><th>المبلغ</th><th>حذف</th></tr>
-          </thead>
-          <tbody id="expensesBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 4. الموظفين -->
-    <div id="employeesTab" class="admin-sub-tab" style="display: none;">
-      <div class="card">
-        <h3>إضافة موظف جديد ليعمل على التطبيق</h3>
-        <div class="grid-layout">
-          <div class="form-group">
-            <label>اسم الموظف الجديد</label>
-            <input type="text" id="newEmployeeName" placeholder="أدخل اسم الموظف">
-          </div>
-          <div class="form-group">
-            <label>رقم الهاتف / ملاحظات</label>
-            <input type="text" id="newEmployeeNote" placeholder="اختياري">
-          </div>
-        </div>
-        <button class="btn btn-primary" onclick="addNewEmployee()">إضافة الموظف لقائمة النظام ➕</button>
-      </div>
-
-      <div class="card">
-        <h3>قائمة الموظفين المسجلين بالنظام</h3>
-        <table>
-          <thead>
-            <tr><th>اسم الموظف</th><th>الملاحظات</th><th>إجراءات</th></tr>
-          </thead>
-          <tbody id="employeesTableBody"></tbody>
-        </table>
-      </div>
-
-      <div class="card">
-        <h3>تقرير المبيعات لكل موظف</h3>
-        <table>
-          <thead>
-            <tr><th>اسم الموظف</th><th>عدد العمليات</th><th>إجمالي مبيعات الموظف</th></tr>
-          </thead>
-          <tbody id="empReportBody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- 5. الخزنة -->
-    <div id="treasuryTab" class="admin-sub-tab" style="display: none;">
-      <div class="card">
-        <h3>جرد الخزنة والنقدية الحالية</h3>
-        <div class="stats-box">
-          <div class="stat-item"><h4>إجمالي المقبوضات</h4><p id="treasurySales" style="color: #137333;">0 ج.م</p></div>
-          <div class="stat-item"><h4>إجمالي المدفوعات</h4><p id="treasuryExpenses" style="color: #ea4335;">0 ج.م</p></div>
-          <div class="stat-item"><h4>المبلغ الصافي بالخزنة</h4><p id="treasuryNet" style="color: #1a73e8;">0 ج.م</p></div>
-        </div>
-      </div>
-    </div>
-
-    <!-- 6. الإعدادات -->
-    <div id="settingsTab" class="admin-sub-tab" style="display: none;">
-      <div class="card" style="max-width: 500px; margin: 0 auto;">
-        <h3>تغيير كلمة سر المدير</h3>
-        <div class="form-group" style="margin-top: 12px;">
-          <label>كلمة السر الحالية</label>
-          <input type="password" id="currentPin" placeholder="أدخل الرقم الحالي">
-        </div>
-        <div class="form-group">
-          <label>كلمة السر الجديدة</label>
-          <input type="password" id="newPin" placeholder="أدخل الرقم الجديد">
-        </div>
-        <button class="btn btn-primary" style="margin-top: 8px;" onclick="changeAdminPin()">حفظ الرقم السري الجديد 🔑</button>
-      </div>
-    </div>
-
-  </div>
-</div>
-
-<!-- PIN MODAL -->
-<div id="pinModal" class="pin-modal">
-  <div class="pin-box">
-    <h3 style="margin-bottom: 10px;">أدخل كلمة سر المدير</h3>
-    <input type="password" id="pinInput" placeholder="****" style="width: 100%; padding: 8px; font-size: 18px; text-align: center; margin-bottom: 12px;">
-    <button class="btn btn-primary" onclick="verifyPin()">دخول</button>
-    <button class="btn btn-danger" onclick="closePinModal()" style="margin-top: 5px;">إلغاء</button>
+    <button class="btn btn-primary" onclick="addProduct()">حفظ بالمخزن 💾</button>
   </div>
 </div>
 
 <script>
-  // تسجيل Service Worker لتحويل الموقع لتطبيق PWA مستقل
   if ('serviceWorker' in navigator) {
-    const swCode = `
-      self.addEventListener('install', (e) => self.skipWaiting());
-      self.addEventListener('fetch', (e) => e.respondWith(fetch(e.request).catch(() => caches.match(e.request))));
-    `;
-    const blob = new Blob([swCode], { type: 'text/javascript' });
-    navigator.serviceWorker.register(URL.createObjectURL(blob)).catch(() => {});
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 
-  let adminPin = localStorage.getItem('local_admin_pin') || "1234";
-  let isAdminLoggedIn = false;
   let products = JSON.parse(localStorage.getItem('local_products')) || {};
   let cart = [];
-  let sales = JSON.parse(localStorage.getItem('local_sales')) || [];
-  let expenses = JSON.parse(localStorage.getItem('local_expenses')) || [];
-  let employees = JSON.parse(localStorage.getItem('local_employees')) || {};
-  let activeEmployee = "مدير النظام";
+  let html5QrcodeScanner = null;
 
   window.onload = function() {
-    renderInventory();
-    renderPosProducts();
-    renderEmployeesList();
-    renderReports();
+    renderProducts();
   };
 
-  function checkPinAndOpenAdmin() {
-    if (isAdminLoggedIn) {
-      switchTab('adminContainer');
-      return;
-    }
-    document.getElementById('pinInput').value = '';
-    document.getElementById('pinModal').style.display = 'flex';
-  }
+  function addProduct() {
+    const name = document.getElementById('pName').value.trim();
+    const barcode = document.getElementById('pBarcode').value.trim();
+    const price = parseFloat(document.getElementById('pPrice').value) || 0;
+    if (!name || price <= 0) return alert('أدخل الاسم والسعر بشكل صحيح');
 
-  function verifyPin() {
-    const pin = document.getElementById('pinInput').value;
-    if (pin === adminPin) {
-      isAdminLoggedIn = true;
-      closePinModal();
-      switchTab('adminContainer');
-    } else {
-      alert('كلمة السر خاطئة!');
-    }
-  }
-
-  function closePinModal() {
-    document.getElementById('pinModal').style.display = 'none';
-  }
-
-  function switchTab(tabName) {
-    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
-    document.getElementById(tabName).classList.add('active');
+    const id = 'p_' + Date.now();
+    products[id] = { name, barcode, price };
+    localStorage.setItem('local_products', JSON.stringify(products));
     
-    if (tabName === 'pos') {
-      document.getElementById('btnPosTab').classList.add('active');
-    } else {
-      document.getElementById('btnPosTab').classList.remove('active');
-    }
-  }
-
-  function openAdminSubTab(subTabId) {
-    document.querySelectorAll('.admin-sub-tab').forEach(t => t.style.display = 'none');
-    document.getElementById(subTabId).style.display = 'block';
-    window.scrollTo({ top: 300, behavior: 'smooth' });
-  }
-
-  function previewImageCompressed(event) {
-    const file = event.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        const img = new Image();
-        img.src = e.target.result;
-        img.onload = function() {
-          const canvas = document.createElement('canvas');
-          const ctx = canvas.getContext('2d');
-          canvas.width = 100;
-          canvas.height = 100;
-          ctx.drawImage(img, 0, 0, 100, 100);
-          const compressedBase64 = canvas.toDataURL('image/jpeg', 0.5);
-          document.getElementById('pImageBase64').value = compressedBase64;
-          const imgPre = document.getElementById('imgPreview');
-          imgPre.src = compressedBase64;
-          imgPre.style.display = 'block';
-        }
-      }
-      reader.readAsDataURL(file);
-    }
-  }
-
-  function saveProduct() {
-    try {
-      const editId = document.getElementById('pEditId').value;
-      const name = document.getElementById('pName').value.trim();
-      const cost = parseFloat(document.getElementById('pCost').value) || 0;
-      const price = parseFloat(document.getElementById('pPrice').value) || 0;
-      const stock = parseInt(document.getElementById('pStock').value) || 0;
-      let image = document.getElementById('pImageBase64').value;
-
-      if (!name) {
-        alert('⚠️ يرجى كتابة اسم المنتج أو اللعبة أولاً!');
-        return;
-      }
-
-      if (price <= 0) {
-        alert('⚠️ يرجى كتابة سعر بيع صحيح أكبر من 0!');
-        return;
-      }
-
-      const id = editId ? editId : 'p_' + Date.now();
-
-      if (!image && editId && products[editId]) {
-        image = products[editId].image;
-      }
-      if (!image) {
-        image = 'https://via.placeholder.com/60?text=Toy';
-      }
-
-      const prodData = { name, cost, price, stock, image };
-      products[id] = prodData;
-      
-      localStorage.setItem('local_products', JSON.stringify(products));
-
-      renderInventory();
-      renderPosProducts();
-      
-      alert('✅ تم حفظ المنتج بنجاح بالمخزن!');
-      resetForm();
-    } catch (err) {
-      alert('حدث خطأ أثناء الحفظ: ' + err.message);
-    }
-  }
-
-  function editProduct(id) {
-    const p = products[id];
-    if (!p) return;
-    document.getElementById('pEditId').value = id;
-    document.getElementById('pName').value = p.name;
-    document.getElementById('pCost').value = p.cost;
-    document.getElementById('pPrice').value = p.price;
-    document.getElementById('pStock').value = p.stock;
-    document.getElementById('pImageBase64').value = p.image;
-    
-    if (p.image) {
-      const imgPre = document.getElementById('imgPreview');
-      imgPre.src = p.image;
-      imgPre.style.display = 'block';
-    }
-
-    document.getElementById('formTitle').innerText = 'تعديل المنتج: ' + p.name;
-    document.getElementById('saveBtn').innerText = 'تحديث وتعديل المنتج 🔄';
-    document.getElementById('saveBtn').className = 'btn btn-info';
-    document.getElementById('cancelBtn').style.display = 'block';
-    openAdminSubTab('inventoryTab');
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-
-  function resetForm() {
-    document.getElementById('pEditId').value = '';
     document.getElementById('pName').value = '';
-    document.getElementById('pCost').value = '';
+    document.getElementById('pBarcode').value = '';
     document.getElementById('pPrice').value = '';
-    document.getElementById('pStock').value = '';
-    document.getElementById('pImageBase64').value = '';
-    document.getElementById('pImageFile').value = '';
-    document.getElementById('imgPreview').style.display = 'none';
-    
-    document.getElementById('formTitle').innerText = 'إضافة منتج جديد بالمخزن';
-    document.getElementById('saveBtn').innerText = 'حفظ المنتج بالمخزن 💾';
-    document.getElementById('saveBtn').className = 'btn btn-primary';
-    document.getElementById('cancelBtn').style.display = 'none';
+    renderProducts();
+    alert('تم حفظ المنتج بالمخزن!');
   }
 
-  function deleteProduct(id) {
-    if (confirm('هل أنت متأكد من حذف هذا المنتج؟')) {
-      delete products[id];
-      localStorage.setItem('local_products', JSON.stringify(products));
-      renderInventory();
-      renderPosProducts();
-    }
-  }
-
-  function renderInventory() {
-    const tbody = document.getElementById('inventoryBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    const query = document.getElementById('invSearchInput').value.trim().toLowerCase();
-    
-    let totalQty = 0;
-    let totalCostVal = 0;
-    let totalSalesVal = 0;
+  function renderProducts() {
+    const grid = document.getElementById('productGrid');
+    grid.innerHTML = '';
+    const q = document.getElementById('searchInput').value.toLowerCase();
 
     Object.keys(products).forEach(id => {
       const p = products[id];
-      
-      totalQty += p.stock || 0;
-      totalCostVal += (p.cost || 0) * (p.stock || 0);
-      totalSalesVal += (p.price || 0) * (p.stock || 0);
-
-      if (query && !p.name.toLowerCase().includes(query)) return;
-
-      tbody.innerHTML += `
-        <tr>
-          <td><img src="${p.image}" style="width:35px; height:35px; object-fit:cover; border-radius:4px;"></td>
-          <td>${p.name}</td>
-          <td>${p.cost} ج.م</td>
-          <td>${p.price} ج.م</td>
-          <td>${p.stock}</td>
-          <td>${(p.cost || 0) * (p.stock || 0)} ج.م</td>
-          <td>
-            <button class="btn btn-info" style="padding: 3px 6px; font-size: 11px; margin-bottom: 2px;" onclick="editProduct('${id}')">تعديل ✏️</button>
-            <button class="btn btn-danger" style="padding: 3px 6px; font-size: 11px;" onclick="deleteProduct('${id}')">حذف 🗑️</button>
-          </td>
-        </tr>
-      `;
-    });
-
-    document.getElementById('invTotalQty').innerText = totalQty + ' قطعة';
-    document.getElementById('invTotalCost').innerText = totalCostVal + ' ج.م';
-    document.getElementById('invTotalSalesVal').innerText = totalSalesVal + ' ج.م';
-    document.getElementById('invTotalExpectedProfit').innerText = (totalSalesVal - totalCostVal) + ' ج.م';
-  }
-
-  function renderPosProducts() {
-    const grid = document.getElementById('productGrid');
-    if (!grid) return;
-    grid.innerHTML = '';
-    const query = document.getElementById('posSearchInput') ? document.getElementById('posSearchInput').value.trim().toLowerCase() : '';
-    const keys = Object.keys(products);
-
-    if (keys.length === 0) {
-      grid.innerHTML = '<p style="text-align: center; grid-column: 1/-1;">لا توجد منتجات مسجلة بعد</p>';
-      return;
-    }
-    
-    let matchCount = 0;
-    keys.forEach(id => {
-      const p = products[id];
-      if (query && !p.name.toLowerCase().includes(query)) return;
-      
-      matchCount++;
+      if (q && !p.name.toLowerCase().includes(q) && !(p.barcode && p.barcode.includes(q))) return;
       grid.innerHTML += `
         <div class="product-item" onclick="addToCart('${id}')">
-          <img src="${p.image}" alt="${p.name}">
-          <div class="name">${p.name}</div>
-          <div class="price">${p.price} ج.م</div>
-          <div class="stock">المتبقي: ${p.stock}</div>
+          <div style="font-weight:bold;">${p.name}</div>
+          <div style="color:#137333; font-size:12px;">${p.price} ج.م</div>
         </div>
       `;
     });
-
-    if (matchCount === 0) {
-      grid.innerHTML = '<p style="text-align: center; grid-column: 1/-1;">لا توجد نتائج مطابقة للبحث</p>';
-    }
   }
 
   function addToCart(id) {
     const p = products[id];
-    if (p.stock <= 0) {
-      alert('هذا المنتج نفد من المخزن!');
-      return;
-    }
-
     const existing = cart.find(item => item.id === id);
     if (existing) {
-      if (existing.qty < p.stock) {
-        existing.qty++;
-      } else {
-        alert('لا توجد كمية كافية بالمخزن!');
-      }
+      existing.qty++;
     } else {
-      cart.push({ id, name: p.name, price: p.price, cost: p.cost, qty: 1 });
+      cart.push({ id, name: p.name, price: p.price, qty: 1 });
     }
+    renderCart();
+  }
+
+  function updateCartPrice(index, newPrice) {
+    cart[index].price = parseFloat(newPrice) || 0;
+    renderCart();
+  }
+
+  function updateCartQty(index, newQty) {
+    cart[index].qty = parseInt(newQty) || 1;
     renderCart();
   }
 
@@ -624,256 +173,57 @@
 
   function renderCart() {
     const tbody = document.getElementById('cartBody');
-    if (!tbody) return;
     tbody.innerHTML = '';
     let total = 0;
+
     cart.forEach((item, index) => {
       const itemTotal = item.price * item.qty;
       total += itemTotal;
       tbody.innerHTML += `
         <tr>
           <td>${item.name}</td>
-          <td>${item.qty}</td>
-          <td>${item.price} ج.م</td>
+          <td><input type="number" class="edit-input" value="${item.qty}" min="1" onchange="updateCartQty(${index}, this.value)"></td>
+          <td><input type="number" class="edit-input" value="${item.price}" onchange="updateCartPrice(${index}, this.value)"> ج.م</td>
           <td>${itemTotal} ج.م</td>
-          <td><button class="btn btn-danger" style="padding: 2px 5px; font-size: 11px;" onclick="removeFromCart(${index})">x</button></td>
+          <td><button class="btn btn-danger" style="padding:2px 6px;" onclick="removeFromCart(${index})">X</button></td>
         </tr>
       `;
     });
+
     document.getElementById('cartTotal').innerText = total + ' ج.م';
   }
 
-  function checkout() {
-    if (cart.length === 0) {
-      alert('السلة فارغة!');
-      return;
-    }
-
-    let totalSales = 0;
-    let totalCost = 0;
-
-    cart.forEach(item => {
-      totalSales += item.price * item.qty;
-      totalCost += item.cost * item.qty;
-      if (products[item.id]) {
-        products[item.id].stock = (products[item.id].stock || 0) - item.qty;
+  function toggleScanner() {
+    const readerDiv = document.getElementById('reader');
+    if (readerDiv.style.display === 'block') {
+      if (html5QrcodeScanner) {
+        html5QrcodeScanner.stop().then(() => readerDiv.style.display = 'none');
       }
-    });
+    } else {
+      readerDiv.style.display = 'block';
+      html5QrcodeScanner = new Html5Qrcode("reader");
+      html5QrcodeScanner.start(
+        { facingMode: "environment" },
+        { fps: 10, qrbox: { width: 250, height: 150 } },
+        (barcode) => {
+          let foundId = Object.keys(products).find(id => products[id].barcode === barcode);
+          if (foundId) {
+            addToCart(foundId);
+            alert("تم إضافة: " + products[foundId].name);
+          } else {
+            alert("باركوود غير مسجل: " + barcode);
+          }
+        }
+      ).catch(() => alert("يرجى إعطاء صلاحية الكاميرا للمتصفح!"));
+    }
+  }
 
-    localStorage.setItem('local_products', JSON.stringify(products));
-
-    const saleRecord = {
-      timestamp: new Date().toLocaleString('ar-EG'),
-      employee: activeEmployee,
-      itemsCount: cart.length,
-      totalSales: totalSales,
-      profit: totalSales - totalCost
-    };
-
-    sales.push(saleRecord);
-    localStorage.setItem('local_sales', JSON.stringify(sales));
-
-    alert('تمت عملية البيع بنجاح! 🧾');
+  function checkout() {
+    if (cart.length === 0) return alert('السلة فارغة!');
+    alert('تم تسجيل الفاتورة بنجاح! 🧾');
     cart = [];
     renderCart();
-    renderInventory();
-    renderPosProducts();
-    renderReports();
-  }
-
-  function addExpense() {
-    const title = document.getElementById('expTitle').value.trim();
-    const amount = parseFloat(document.getElementById('expAmount').value) || 0;
-
-    if (!title || amount <= 0) {
-      alert('برجاء إدخال بند المصروف والمبلغ بشكل صحيح');
-      return;
-    }
-
-    const expData = {
-      id: 'exp_' + Date.now(),
-      title: title,
-      amount: amount,
-      timestamp: new Date().toLocaleString('ar-EG')
-    };
-
-    expenses.push(expData);
-    localStorage.setItem('local_expenses', JSON.stringify(expenses));
-
-    alert('تم تسجيل المصروف بنجاح!');
-    document.getElementById('expTitle').value = '';
-    document.getElementById('expAmount').value = '';
-    renderExpenses();
-    renderReports();
-  }
-
-  function deleteExpense(id) {
-    if (confirm('هل تريد حذف هذا المصروف؟')) {
-      expenses = expenses.filter(e => e.id !== id);
-      localStorage.setItem('local_expenses', JSON.stringify(expenses));
-      renderExpenses();
-      renderReports();
-    }
-  }
-
-  function renderExpenses() {
-    const tbody = document.getElementById('expensesBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    expenses.forEach(e => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${e.timestamp}</td>
-          <td>${e.title}</td>
-          <td>${e.amount} ج.م</td>
-          <td><button class="btn btn-danger" style="padding: 2px 5px; font-size: 11px;" onclick="deleteExpense('${e.id}')">حذف</button></td>
-        </tr>
-      `;
-    });
-  }
-
-  function renderReports() {
-    let totalSales = 0;
-    let totalGrossProfit = 0;
-    let totalExpensesSum = 0;
-
-    sales.forEach(s => {
-      totalSales += s.totalSales || 0;
-      totalGrossProfit += s.profit || 0;
-    });
-
-    expenses.forEach(e => {
-      totalExpensesSum += e.amount || 0;
-    });
-
-    const netProfit = totalGrossProfit - totalExpensesSum;
-
-    if (document.getElementById('repSales')) document.getElementById('repSales').innerText = totalSales + ' ج.م';
-    if (document.getElementById('repGrossProfit')) document.getElementById('repGrossProfit').innerText = totalGrossProfit + ' ج.م';
-    if (document.getElementById('repExpenses')) document.getElementById('repExpenses').innerText = totalExpensesSum + ' ج.م';
-    if (document.getElementById('repProfit')) document.getElementById('repProfit').innerText = netProfit + ' ج.م';
-
-    if (document.getElementById('treasurySales')) document.getElementById('treasurySales').innerText = totalSales + ' ج.م';
-    if (document.getElementById('treasuryExpenses')) document.getElementById('treasuryExpenses').innerText = totalExpensesSum + ' ج.م';
-    if (document.getElementById('treasuryNet')) document.getElementById('treasuryNet').innerText = (totalSales - totalExpensesSum) + ' ج.م';
-
-    const tbody = document.getElementById('salesBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    sales.slice().reverse().forEach(s => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${s.timestamp}</td>
-          <td>${s.employee || 'غير محدد'}</td>
-          <td>${s.itemsCount}</td>
-          <td>${s.totalSales} ج.م</td>
-          <td>${s.profit} ج.م</td>
-        </tr>
-      `;
-    });
-  }
-
-  function renderEmpReport() {
-    const tbody = document.getElementById('empReportBody');
-    if (!tbody) return;
-    tbody.innerHTML = '';
-    
-    let empStats = {};
-    sales.forEach(s => {
-      let emp = s.employee || 'غير محدد';
-      if (!empStats[emp]) {
-        empStats[emp] = { count: 0, totalSales: 0 };
-      }
-      empStats[emp].count += 1;
-      empStats[emp].totalSales += s.totalSales || 0;
-    });
-
-    Object.keys(empStats).forEach(empName => {
-      tbody.innerHTML += `
-        <tr>
-          <td>${empName}</td>
-          <td>${empStats[empName].count}</td>
-          <td>${empStats[empName].totalSales} ج.م</td>
-        </tr>
-      `;
-    });
-  }
-
-  function addNewEmployee() {
-    const empName = document.getElementById('newEmployeeName').value.trim();
-    const empNote = document.getElementById('newEmployeeNote').value.trim();
-
-    if (!empName) {
-      alert('برجاء إدخال اسم الموظف');
-      return;
-    }
-
-    const id = 'emp_' + Date.now();
-    employees[id] = { name: empName, note: empNote };
-    localStorage.setItem('local_employees', JSON.stringify(employees));
-    renderEmployeesList();
-
-    alert('تمت إضافة الموظف بنجاح! 👤');
-    document.getElementById('newEmployeeName').value = '';
-    document.getElementById('newEmployeeNote').value = '';
-  }
-
-  function deleteEmployee(id) {
-    if (confirm('هل أنت متأكد من حذف هذا الموظف؟')) {
-      delete employees[id];
-      localStorage.setItem('local_employees', JSON.stringify(employees));
-      renderEmployeesList();
-    }
-  }
-
-  function renderEmployeesList() {
-    const select = document.getElementById('posEmployeeSelect');
-    const tbody = document.getElementById('employeesTableBody');
-    if (!select || !tbody) return;
-
-    select.innerHTML = '<option value="مدير النظام">مدير النظام</option>';
-    tbody.innerHTML = '';
-
-    Object.keys(employees).forEach(id => {
-      const emp = employees[id];
-      select.innerHTML += `<option value="${emp.name}">${emp.name}</option>`;
-      tbody.innerHTML += `
-        <tr>
-          <td>${emp.name}</td>
-          <td>${emp.note || '-'}</td>
-          <td><button class="btn btn-danger" style="padding: 2px 5px; font-size: 11px;" onclick="deleteEmployee('${id}')">حذف</button></td>
-        </tr>
-      `;
-    });
-
-    select.value = activeEmployee;
-  }
-
-  function changeActiveEmployee(empName) {
-    activeEmployee = empName;
-    document.getElementById('activeEmpName').innerText = activeEmployee;
-  }
-
-  function changeAdminPin() {
-    const current = document.getElementById('currentPin').value;
-    const newP = document.getElementById('newPin').value.trim();
-
-    if (current !== adminPin) {
-      alert('كلمة السر الحالية غير صحيحة!');
-      return;
-    }
-    if (!newP || newP.length < 3) {
-      alert('برجاء إدخال رقم سري جديد قوي');
-      return;
-    }
-
-    adminPin = newP;
-    localStorage.setItem('local_admin_pin', adminPin);
-    alert('تم تغيير كلمة السر بنجاح! 🔑');
-    document.getElementById('currentPin').value = '';
-    document.getElementById('newPin').value = '';
   }
 </script>
 </body>
-            </html>
-            
+</html>
