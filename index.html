@@ -37,6 +37,7 @@
 
     .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; max-height: 350px; overflow-y: auto; }
     .product-item { background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; }
+    .stock-tag { font-size: 11px; color: #1a73e8; font-weight: bold; margin-top: 3px; }
 
     table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
     th, td { border: 1px solid #dadce0; padding: 6px; text-align: center; }
@@ -88,11 +89,12 @@
   </div>
 
   <div class="card" style="margin-top: 15px;">
-    <h3>إضافة منتج جديد للمخزن</h3>
+    <h3>🔒 إضافة منتج جديد للمخزن (حماية بكلمة سر)</h3>
     <div class="grid-layout">
       <div class="form-group"><label>اسم اللعبة</label><input type="text" id="pName"></div>
       <div class="form-group"><label>الباركوود (اختياري)</label><input type="text" id="pBarcode"></div>
       <div class="form-group"><label>سعر البيع الافتراضي</label><input type="number" id="pPrice"></div>
+      <div class="form-group"><label>الكمية بالمخزن</label><input type="number" id="pStock" value="10"></div>
     </div>
     <button class="btn btn-primary" onclick="addProduct()">حفظ بالمخزن 💾</button>
   </div>
@@ -103,6 +105,9 @@
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 
+  // كلمة سر الحماية لإضافة المنتجات (يمكنك تغيير الرقم 1234 لأي رمز)
+  const ADMIN_PIN = "1234";
+
   let products = JSON.parse(localStorage.getItem('local_products')) || {};
   let cart = [];
   let html5QrcodeScanner = null;
@@ -111,21 +116,36 @@
     renderProducts();
   };
 
+  function checkAdmin() {
+    let pin = prompt("أدخل كلمة السر / الباركوود الخاص بالإدارة:");
+    if (pin === ADMIN_PIN) {
+      return true;
+    } else {
+      if (pin !== null) alert("كلمة السر غير صحيحة!");
+      return false;
+    }
+  }
+
   function addProduct() {
+    if (!checkAdmin()) return;
+
     const name = document.getElementById('pName').value.trim();
     const barcode = document.getElementById('pBarcode').value.trim();
     const price = parseFloat(document.getElementById('pPrice').value) || 0;
+    const stock = parseInt(document.getElementById('pStock').value) || 0;
+
     if (!name || price <= 0) return alert('أدخل الاسم والسعر بشكل صحيح');
 
-    const id = 'p_' + Date.now();
-    products[id] = { name, barcode, price };
+    const id = barcode ? 'bar_' + barcode : 'p_' + Date.now();
+    products[id] = { name, barcode, price, stock };
     localStorage.setItem('local_products', JSON.stringify(products));
     
     document.getElementById('pName').value = '';
     document.getElementById('pBarcode').value = '';
     document.getElementById('pPrice').value = '';
+    document.getElementById('pStock').value = '10';
     renderProducts();
-    alert('تم حفظ المنتج بالمخزن!');
+    alert('تم حفظ المنتج بالمخزن بنجاح!');
   }
 
   function renderProducts() {
@@ -140,6 +160,7 @@
         <div class="product-item" onclick="addToCart('${id}')">
           <div style="font-weight:bold;">${p.name}</div>
           <div style="color:#137333; font-size:12px;">${p.price} ج.م</div>
+          <div class="stock-tag">المخزون: ${p.stock ?? 0}</div>
         </div>
       `;
     });
@@ -147,8 +168,17 @@
 
   function addToCart(id) {
     const p = products[id];
+    if ((p.stock ?? 0) <= 0) {
+      alert('⚠️ هذا المنتج نفد من المخزن!');
+      return;
+    }
+
     const existing = cart.find(item => item.id === id);
     if (existing) {
+      if (existing.qty + 1 > p.stock) {
+        alert('⚠️ الكمية الكلية المطلوبة تتجاوز المتاح بالمخزن!');
+        return;
+      }
       existing.qty++;
     } else {
       cart.push({ id, name: p.name, price: p.price, qty: 1 });
@@ -162,7 +192,14 @@
   }
 
   function updateCartQty(index, newQty) {
-    cart[index].qty = parseInt(newQty) || 1;
+    const qty = parseInt(newQty) || 1;
+    const p = products[cart[index].id];
+    if (qty > (p.stock ?? 0)) {
+      alert('⚠️ الكمية تتجاوز المتاح في المخزن (' + p.stock + ')');
+      renderCart();
+      return;
+    }
+    cart[index].qty = qty;
     renderCart();
   }
 
@@ -209,7 +246,6 @@
           let foundId = Object.keys(products).find(id => products[id].barcode === barcode);
           if (foundId) {
             addToCart(foundId);
-            alert("تم إضافة: " + products[foundId].name);
           } else {
             alert("باركوود غير مسجل: " + barcode);
           }
@@ -218,12 +254,25 @@
     }
   }
 
+  // الخصم التلقائي من المخزن عند الحفظ
   function checkout() {
     if (cart.length === 0) return alert('السلة فارغة!');
-    alert('تم تسجيل الفاتورة بنجاح! 🧾');
+
+    cart.forEach(item => {
+      if (products[item.id]) {
+        products[item.id].stock = (products[item.id].stock || 0) - item.qty;
+        if (products[item.id].stock < 0) products[item.id].stock = 0;
+      }
+    });
+
+    localStorage.setItem('local_products', JSON.stringify(products));
+
+    alert('تم تسجيل الفاتورة وخصم الكمية من المخزن بنجاح! 🧾');
     cart = [];
     renderCart();
+    renderProducts();
   }
 </script>
 </body>
-</html>
+  </html>
+  
