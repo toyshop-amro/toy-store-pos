@@ -10,55 +10,69 @@
   <meta name="theme-color" content="#1a73e8">
   <link rel="manifest" href="./manifest.json">
 
-  <!-- مكتبة ماسح الباركوود بالكاميرا -->
+  <!-- مكتبة ماسح الباركوود -->
   <script src="https://unpkg.com/html5-qrcode"></script>
 
   <style>
     * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, sans-serif; margin: 0; padding: 0; }
-    body { background-color: #f0f2f5; padding: 10px; color: #333; }
-    .container { max-width: 1200px; margin: 0 auto; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-    h1 { text-align: center; color: #1a73e8; margin-bottom: 12px; font-size: 22px; }
+    body { background-color: #f0f2f5; padding: 10px; color: #333; padding-bottom: 70px; }
+    .container { max-width: 1200px; margin: 0 auto; }
     
-    .grid-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
-    @media (max-width: 768px) { .grid-layout { grid-template-columns: 1fr; } }
+    /* Nav Tabs */
+    .nav-tabs { display: flex; justify-content: space-around; background: #1a73e8; position: fixed; bottom: 0; left: 0; right: 0; z-index: 1000; padding: 8px 0; }
+    .nav-tab { color: white; text-decoration: none; text-align: center; font-size: 12px; font-weight: bold; background: none; border: none; cursor: pointer; flex: 1; }
+    .nav-tab.active { color: #ffe600; }
+    .nav-tab span { display: block; font-size: 18px; margin-bottom: 2px; }
+
+    .tab-content { display: none; background: #fff; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); margin-bottom: 15px; }
+    .tab-content.active { display: block; }
+
+    h1, h2 { text-align: center; color: #1a73e8; margin-bottom: 12px; font-size: 20px; }
 
     .card { background: #f8f9fa; padding: 12px; border-radius: 8px; border: 1px solid #dadce0; margin-bottom: 12px; }
-    .card h3 { margin-bottom: 10px; color: #3c4043; border-bottom: 1px solid #ddd; padding-bottom: 5px; font-size: 16px; }
+    .card h3 { margin-bottom: 10px; color: #3c4043; border-bottom: 1px solid #ddd; padding-bottom: 5px; font-size: 15px; }
 
     .form-group { margin-bottom: 10px; }
     .form-group label { display: block; margin-bottom: 4px; font-size: 13px; font-weight: 600; }
-    .form-group input { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+    .form-group input, .form-group select { width: 100%; padding: 8px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
 
-    .btn { width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; }
+    .btn { width: 100%; padding: 10px; border: none; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; margin-top: 5px; }
     .btn-primary { background: #1a73e8; color: white; }
     .btn-success { background: #34a853; color: white; }
     .btn-danger { background: #ea4335; color: white; }
     .btn-warning { background: #f9ab00; color: white; }
 
-    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; max-height: 350px; overflow-y: auto; }
-    .product-item { background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 8px; text-align: center; cursor: pointer; }
-    .stock-tag { font-size: 11px; color: #1a73e8; font-weight: bold; margin-top: 3px; }
+    .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; max-height: 400px; overflow-y: auto; }
+    .product-item { background: white; border: 2px solid #e0e0e0; border-radius: 8px; padding: 6px; text-align: center; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify: space-between; }
+    .product-img { width: 100%; height: 75px; object-fit: cover; border-radius: 6px; margin-bottom: 4px; background: #eee; }
+    .stock-tag { font-size: 11px; color: #1a73e8; font-weight: bold; margin-top: 2px; }
 
-    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 13px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
     th, td { border: 1px solid #dadce0; padding: 6px; text-align: center; }
     th { background: #f1f3f4; }
-    .edit-input { width: 55px; text-align: center; padding: 4px; border: 1px solid #1a73e8; border-radius: 4px; font-size: 13px; }
-    #reader { width: 100%; max-width: 350px; margin: 10px auto; display: none; border: 2px solid #1a73e8; border-radius: 8px; }
+    .edit-input { width: 45px; text-align: center; padding: 3px; border: 1px solid #1a73e8; border-radius: 4px; font-size: 12px; }
+    #reader { width: 100%; max-width: 320px; margin: 10px auto; display: none; border: 2px solid #1a73e8; border-radius: 8px; }
+    
+    .report-box { background: #e8f0fe; padding: 10px; border-radius: 8px; text-align: center; margin-bottom: 10px; }
+    .report-box h4 { font-size: 14px; color: #1967d2; }
+    .report-box div { font-size: 18px; font-weight: bold; color: #137333; margin-top: 4px; }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>🧸 كاشير متجر الألعاب الاحترافي</h1>
 
-  <div class="card" style="text-align: center;">
-    <button class="btn btn-warning" onclick="toggleScanner()">📷 مسح باركوود بالكاميرا</button>
-    <div id="reader"></div>
-  </div>
+  <!-- TAB 1: الكاشير والبيع -->
+  <div id="tab-pos" class="tab-content active">
+    <h1>🧸 كاشير المبيعات</h1>
 
-  <div class="grid-layout">
+    <div class="card" style="text-align: center;">
+      <button class="btn btn-warning" onclick="toggleScanner()">📷 مسح باركوود بالكاميرا</button>
+      <div id="reader"></div>
+    </div>
+
     <div class="card">
-      <h3>المنتجات (اضغط للإضافة)</h3>
+      <h3>المنتجات (اضغط للإضافة للسلة)</h3>
       <div class="form-group">
         <input type="text" id="searchInput" placeholder="🔍 بحث باسم اللعبة أو الباركوود..." oninput="renderProducts()">
       </div>
@@ -66,13 +80,13 @@
     </div>
 
     <div class="card">
-      <h3>🛒 السلة والفاتورة (تعديل السعر والعدد)</h3>
+      <h3>🛒 السلة والفاتورة</h3>
       <table>
         <thead>
           <tr>
             <th>المنتج</th>
             <th>العدد</th>
-            <th>سعر البيع</th>
+            <th>السعر</th>
             <th>الإجمالي</th>
             <th>حذف</th>
           </tr>
@@ -80,7 +94,7 @@
         <tbody id="cartBody"></tbody>
       </table>
       
-      <div style="margin-top: 15px; font-size: 18px; font-weight: bold; display: flex; justify-content: space-between;">
+      <div style="margin-top: 12px; font-size: 16px; font-weight: bold; display: flex; justify-content: space-between;">
         <span>إجمالي الفاتورة:</span>
         <span id="cartTotal" style="color: #137333;">0 ج.م</span>
       </div>
@@ -88,16 +102,74 @@
     </div>
   </div>
 
-  <div class="card" style="margin-top: 15px;">
-    <h3>🔒 إضافة منتج جديد للمخزن (حماية بكلمة سر)</h3>
-    <div class="grid-layout">
+  <!-- TAB 2: إدارة المخزن والمنتجات -->
+  <div id="tab-stock" class="tab-content">
+    <h2>📦 إدارة المخزن وإضافة لعب جديدة</h2>
+    <div class="card">
+      <h3>إضافة منتج بالصورة</h3>
       <div class="form-group"><label>اسم اللعبة</label><input type="text" id="pName"></div>
       <div class="form-group"><label>الباركوود (اختياري)</label><input type="text" id="pBarcode"></div>
-      <div class="form-group"><label>سعر البيع الافتراضي</label><input type="number" id="pPrice"></div>
+      <div class="form-group"><label>سعر البيع (ج.م)</label><input type="number" id="pPrice"></div>
       <div class="form-group"><label>الكمية بالمخزن</label><input type="number" id="pStock" value="10"></div>
+      <div class="form-group">
+        <label>صورة اللعبة (التقاط بالكاميرا أو اختيار)</label>
+        <input type="file" id="pImg" accept="image/*" capture="environment">
+      </div>
+      <button class="btn btn-primary" onclick="addProduct()">حفظ اللعبة بالمخزن 💾</button>
     </div>
-    <button class="btn btn-primary" onclick="addProduct()">حفظ بالمخزن 💾</button>
   </div>
+
+  <!-- TAB 3: تسجيل المصروفات -->
+  <div id="tab-expenses" class="tab-content">
+    <h2>💸 تسجيل المصروفات اليومية</h2>
+    <div class="card">
+      <div class="form-group"><label>بيان المصروف (مثل: إيجار، كهرباء، أكياس...)</label><input type="text" id="expTitle"></div>
+      <div class="form-group"><label>المبلغ (ج.م)</label><input type="number" id="expAmount"></div>
+      <button class="btn btn-danger" onclick="addExpense()">تسجيل المصروف 📝</button>
+    </div>
+
+    <div class="card">
+      <h3>سجل مصروفات اليوم</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>البيان</th>
+            <th>المبلغ</th>
+            <th>الوقت</th>
+          </tr>
+        </thead>
+        <tbody id="expBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- TAB 4: التقارير والأرباح -->
+  <div id="tab-reports" class="tab-content">
+    <h2>📊 تقارير المبيعات والأرباح</h2>
+    <div class="report-box">
+      <h4>إجمالي مبيعات اليوم</h4>
+      <div id="repSales">0 ج.م</div>
+    </div>
+    <div class="report-box" style="background: #fce8e6;">
+      <h4 style="color: #c5221f;">إجمالي مصروفات اليوم</h4>
+      <div id="repExp" style="color: #c5221f;">0 ج.م</div>
+    </div>
+    <div class="report-box" style="background: #e6f4ea;">
+      <h4 style="color: #137333;">صافي النقدية / الدرج اليوم</h4>
+      <div id="repNet" style="color: #137333;">0 ج.م</div>
+    </div>
+
+    <button class="btn btn-warning" onclick="renderReports()">تحديث البيانات 🔄</button>
+  </div>
+
+</div>
+
+<!-- شريط التنقل السفلي -->
+<div class="nav-tabs">
+  <button class="nav-tab active" onclick="switchTab('pos', false)"><span>🛒</span>الكاشير</button>
+  <button class="nav-tab" onclick="switchTab('stock', true)"><span>📦</span>المخزن</button>
+  <button class="nav-tab" onclick="switchTab('expenses', true)"><span>💸</span>المصروفات</button>
+  <button class="nav-tab" onclick="switchTab('reports', true)"><span>📊</span>التقارير</button>
 </div>
 
 <script>
@@ -105,47 +177,74 @@
     navigator.serviceWorker.register('./sw.js').catch(() => {});
   }
 
-  // كلمة سر الحماية لإضافة المنتجات (يمكنك تغيير الرقم 1234 لأي رمز)
   const ADMIN_PIN = "1234";
+  let isAuth = false;
 
   let products = JSON.parse(localStorage.getItem('local_products')) || {};
+  let sales = JSON.parse(localStorage.getItem('local_sales')) || [];
+  let expenses = JSON.parse(localStorage.getItem('local_expenses')) || [];
   let cart = [];
   let html5QrcodeScanner = null;
 
   window.onload = function() {
     renderProducts();
+    renderExpenses();
+    renderReports();
   };
 
-  function checkAdmin() {
-    let pin = prompt("أدخل كلمة السر / الباركوود الخاص بالإدارة:");
-    if (pin === ADMIN_PIN) {
-      return true;
-    } else {
-      if (pin !== null) alert("كلمة السر غير صحيحة!");
-      return false;
+  function switchTab(tabId, requiresAuth) {
+    if (requiresAuth && !isAuth) {
+      let pin = prompt("🔒 أدخل الرقم السري للدخول للإعدادات والتقارير:");
+      if (pin === ADMIN_PIN) {
+        isAuth = true;
+      } else {
+        if (pin !== null) alert("كلمة السر غير صحيحة!");
+        return;
+      }
     }
+
+    document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(b => b.classList.remove('active'));
+    
+    document.getElementById('tab-' + tabId).classList.add('active');
+    event.currentTarget.classList.add('active');
+
+    if (tabId === 'reports') renderReports();
   }
 
   function addProduct() {
-    if (!checkAdmin()) return;
-
     const name = document.getElementById('pName').value.trim();
     const barcode = document.getElementById('pBarcode').value.trim();
     const price = parseFloat(document.getElementById('pPrice').value) || 0;
     const stock = parseInt(document.getElementById('pStock').value) || 0;
+    const imgInput = document.getElementById('pImg');
 
-    if (!name || price <= 0) return alert('أدخل الاسم والسعر بشكل صحيح');
+    if (!name || price <= 0) return alert('أدخل اسم اللعبة والسعر بشكل صحيح');
 
     const id = barcode ? 'bar_' + barcode : 'p_' + Date.now();
-    products[id] = { name, barcode, price, stock };
-    localStorage.setItem('local_products', JSON.stringify(products));
-    
-    document.getElementById('pName').value = '';
-    document.getElementById('pBarcode').value = '';
-    document.getElementById('pPrice').value = '';
-    document.getElementById('pStock').value = '10';
-    renderProducts();
-    alert('تم حفظ المنتج بالمخزن بنجاح!');
+
+    const saveAction = (imgData) => {
+      products[id] = { name, barcode, price, stock, img: imgData || '' };
+      localStorage.setItem('local_products', JSON.stringify(products));
+      
+      document.getElementById('pName').value = '';
+      document.getElementById('pBarcode').value = '';
+      document.getElementById('pPrice').value = '';
+      document.getElementById('pStock').value = '10';
+      document.getElementById('pImg').value = '';
+      renderProducts();
+      alert('تم حفظ اللعبة بالمخزن بنجاح!');
+    };
+
+    if (imgInput.files && imgInput.files[0]) {
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        saveAction(e.target.result);
+      };
+      reader.readAsDataURL(imgInput.files[0]);
+    } else {
+      saveAction('');
+    }
   }
 
   function renderProducts() {
@@ -156,10 +255,14 @@
     Object.keys(products).forEach(id => {
       const p = products[id];
       if (q && !p.name.toLowerCase().includes(q) && !(p.barcode && p.barcode.includes(q))) return;
+      
+      const imgHtml = p.img ? `<img src="${p.img}" class="product-img">` : `<div class="product-img" style="display:flex;align-items:center;justify-content:center;color:#888;">🧩 بلا صورة</div>`;
+
       grid.innerHTML += `
         <div class="product-item" onclick="addToCart('${id}')">
-          <div style="font-weight:bold;">${p.name}</div>
-          <div style="color:#137333; font-size:12px;">${p.price} ج.م</div>
+          ${imgHtml}
+          <div style="font-weight:bold; font-size:12px; margin-top:2px;">${p.name}</div>
+          <div style="color:#137333; font-size:12px; font-weight:bold;">${p.price} ج.م</div>
           <div class="stock-tag">المخزون: ${p.stock ?? 0}</div>
         </div>
       `;
@@ -168,17 +271,11 @@
 
   function addToCart(id) {
     const p = products[id];
-    if ((p.stock ?? 0) <= 0) {
-      alert('⚠️ هذا المنتج نفد من المخزن!');
-      return;
-    }
+    if ((p.stock ?? 0) <= 0) return alert('⚠️ هذا المنتج نفد من المخزن!');
 
     const existing = cart.find(item => item.id === id);
     if (existing) {
-      if (existing.qty + 1 > p.stock) {
-        alert('⚠️ الكمية الكلية المطلوبة تتجاوز المتاح بالمخزن!');
-        return;
-      }
+      if (existing.qty + 1 > p.stock) return alert('⚠️️ الكمية الكلية تتجاوز المتاح بالمخزن!');
       existing.qty++;
     } else {
       cart.push({ id, name: p.name, price: p.price, qty: 1 });
@@ -195,7 +292,7 @@
     const qty = parseInt(newQty) || 1;
     const p = products[cart[index].id];
     if (qty > (p.stock ?? 0)) {
-      alert('⚠️ الكمية تتجاوز المتاح في المخزن (' + p.stock + ')');
+      alert('⚠️ الكمية تتجاوز المتاح بالمخزن (' + p.stock + ')');
       renderCart();
       return;
     }
@@ -220,14 +317,78 @@
         <tr>
           <td>${item.name}</td>
           <td><input type="number" class="edit-input" value="${item.qty}" min="1" onchange="updateCartQty(${index}, this.value)"></td>
-          <td><input type="number" class="edit-input" value="${item.price}" onchange="updateCartPrice(${index}, this.value)"> ج.م</td>
-          <td>${itemTotal} ج.م</td>
-          <td><button class="btn btn-danger" style="padding:2px 6px;" onclick="removeFromCart(${index})">X</button></td>
+          <td><input type="number" class="edit-input" value="${item.price}" onchange="updateCartPrice(${index}, this.value)"></td>
+          <td>${itemTotal}</td>
+          <td><button class="btn btn-danger" style="padding:2px 6px; margin:0;" onclick="removeFromCart(${index})">X</button> </td>
         </tr>
       `;
     });
 
     document.getElementById('cartTotal').innerText = total + ' ج.م';
+  }
+
+  function checkout() {
+    if (cart.length === 0) return alert('السلة فارغة!');
+
+    let total = 0;
+    cart.forEach(item => {
+      total += item.price * item.qty;
+      if (products[item.id]) {
+        products[item.id].stock = (products[item.id].stock || 0) - item.qty;
+      }
+    });
+
+    sales.push({ date: new Date().toLocaleDateString('ar-EG'), total: total, timestamp: Date.now() });
+
+    localStorage.setItem('local_products', JSON.stringify(products));
+    localStorage.setItem('local_sales', JSON.stringify(sales));
+
+    alert('تم تسليم الفاتورة وخصم الكمية من المخزن بنجاح! 🧾');
+    cart = [];
+    renderCart();
+    renderProducts();
+  }
+
+  function addExpense() {
+    const title = document.getElementById('expTitle').value.trim();
+    const amount = parseFloat(document.getElementById('expAmount').value) || 0;
+
+    if (!title || amount <= 0) return alert('أدخل بيان واسم المصروف بالمبلغ المظبوط');
+
+    expenses.push({ title, amount, date: new Date().toLocaleDateString('ar-EG'), time: new Date().toLocaleTimeString('ar-EG', {hour:'2-digit', minute:'2-digit'}) });
+    localStorage.setItem('local_expenses', JSON.stringify(expenses));
+
+    document.getElementById('expTitle').value = '';
+    document.getElementById('expAmount').value = '';
+    renderExpenses();
+    alert('تم تسجيل المصروف بنجاح!');
+  }
+
+  function renderExpenses() {
+    const tbody = document.getElementById('expBody');
+    tbody.innerHTML = '';
+    const today = new Date().toLocaleDateString('ar-EG');
+
+    expenses.filter(e => e.date === today).forEach(e => {
+      tbody.innerHTML += `
+        <tr>
+          <td>${e.title}</td>
+          <td style="color:#c5221f; font-weight:bold;">${e.amount} ج.م</td>
+          <td>${e.time}</td>
+        </tr>
+      `;
+    });
+  }
+
+  function renderReports() {
+    const today = new Date().toLocaleDateString('ar-EG');
+    
+    const todaySales = sales.filter(s => s.date === today).reduce((sum, s) => sum + s.total, 0);
+    const todayExp = expenses.filter(e => e.date === today).reduce((sum, e) => sum + e.amount, 0);
+
+    document.getElementById('repSales').innerText = todaySales + ' ج.م';
+    document.getElementById('repExp').innerText = todayExp + ' ج.م';
+    document.getElementById('repNet').innerText = (todaySales - todayExp) + ' ج.م';
   }
 
   function toggleScanner() {
@@ -241,7 +402,7 @@
       html5QrcodeScanner = new Html5Qrcode("reader");
       html5QrcodeScanner.start(
         { facingMode: "environment" },
-        { fps: 10, qrbox: { width: 250, height: 150 } },
+        { fps: 10, qrbox: { width: 220, height: 140 } },
         (barcode) => {
           let foundId = Object.keys(products).find(id => products[id].barcode === barcode);
           if (foundId) {
@@ -253,26 +414,7 @@
       ).catch(() => alert("يرجى إعطاء صلاحية الكاميرا للمتصفح!"));
     }
   }
-
-  // الخصم التلقائي من المخزن عند الحفظ
-  function checkout() {
-    if (cart.length === 0) return alert('السلة فارغة!');
-
-    cart.forEach(item => {
-      if (products[item.id]) {
-        products[item.id].stock = (products[item.id].stock || 0) - item.qty;
-        if (products[item.id].stock < 0) products[item.id].stock = 0;
-      }
-    });
-
-    localStorage.setItem('local_products', JSON.stringify(products));
-
-    alert('تم تسجيل الفاتورة وخصم الكمية من المخزن بنجاح! 🧾');
-    cart = [];
-    renderCart();
-    renderProducts();
-  }
 </script>
 </body>
-  </html>
-  
+        </html>
+        
