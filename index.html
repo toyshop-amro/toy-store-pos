@@ -106,9 +106,10 @@
   <div id="tab-stock" class="tab-content">
     <h2>📦 إدارة المخزن وإضافة لعب جديدة</h2>
     <div class="card">
-      <h3>إضافة منتج بالصورة</h3>
+      <h3>إضافة منتج جديد</h3>
       <div class="form-group"><label>اسم اللعبة</label><input type="text" id="pName"></div>
       <div class="form-group"><label>الباركوود (اختياري)</label><input type="text" id="pBarcode"></div>
+      <div class="form-group"><label>سعر الشراء / الجملة (ج.م)</label><input type="number" id="pCostPrice" placeholder="تكلفة قطعة الفرد"></div>
       <div class="form-group"><label>سعر البيع (ج.م)</label><input type="number" id="pPrice"></div>
       <div class="form-group"><label>الكمية بالمخزن</label><input type="number" id="pStock" value="10"></div>
       <div class="form-group">
@@ -147,15 +148,19 @@
   <div id="tab-reports" class="tab-content">
     <h2>📊 تقارير المبيعات والأرباح</h2>
     <div class="report-box">
-      <h4>إجمالي مبيعات اليوم</h4>
+      <h4>إجمالي إيراد المبيعات اليوم</h4>
       <div id="repSales">0 ج.م</div>
+    </div>
+    <div class="report-box" style="background: #fff8e1;">
+      <h4 style="color: #b78103;">ربح المبيعات (قبل المصروفات)</h4>
+      <div id="repGrossProfit" style="color: #b78103;">0 ج.م</div>
     </div>
     <div class="report-box" style="background: #fce8e6;">
       <h4 style="color: #c5221f;">إجمالي مصروفات اليوم</h4>
       <div id="repExp" style="color: #c5221f;">0 ج.م</div>
     </div>
     <div class="report-box" style="background: #e6f4ea;">
-      <h4 style="color: #137333;">صافي النقدية / الدرج اليوم</h4>
+      <h4 style="color: #137333;">صافي الربح الحقيقي</h4>
       <div id="repNet" style="color: #137333;">0 ج.م</div>
     </div>
 
@@ -215,20 +220,22 @@
   function addProduct() {
     const name = document.getElementById('pName').value.trim();
     const barcode = document.getElementById('pBarcode').value.trim();
+    const costPrice = parseFloat(document.getElementById('pCostPrice').value) || 0;
     const price = parseFloat(document.getElementById('pPrice').value) || 0;
     const stock = parseInt(document.getElementById('pStock').value) || 0;
     const imgInput = document.getElementById('pImg');
 
-    if (!name || price <= 0) return alert('أدخل اسم اللعبة والسعر بشكل صحيح');
+    if (!name || price <= 0) return alert('أدخل اسم اللعبة وسعر البيع بشكل صحيح');
 
     const id = barcode ? 'bar_' + barcode : 'p_' + Date.now();
 
     const saveAction = (imgData) => {
-      products[id] = { name, barcode, price, stock, img: imgData || '' };
+      products[id] = { name, barcode, costPrice, price, stock, img: imgData || '' };
       localStorage.setItem('local_products', JSON.stringify(products));
       
       document.getElementById('pName').value = '';
       document.getElementById('pBarcode').value = '';
+      document.getElementById('pCostPrice').value = '';
       document.getElementById('pPrice').value = '';
       document.getElementById('pStock').value = '10';
       document.getElementById('pImg').value = '';
@@ -275,10 +282,10 @@
 
     const existing = cart.find(item => item.id === id);
     if (existing) {
-      if (existing.qty + 1 > p.stock) return alert('⚠️️ الكمية الكلية تتجاوز المتاح بالمخزن!');
+      if (existing.qty + 1 > p.stock) return alert('⚠ الكمية الكلية تتجاوز المتاح بالمخزن!');
       existing.qty++;
     } else {
-      cart.push({ id, name: p.name, price: p.price, qty: 1 });
+      cart.push({ id, name: p.name, price: p.price, costPrice: p.costPrice || 0, qty: 1 });
     }
     renderCart();
   }
@@ -331,14 +338,23 @@
     if (cart.length === 0) return alert('السلة فارغة!');
 
     let total = 0;
+    let totalCost = 0;
+
     cart.forEach(item => {
       total += item.price * item.qty;
+      totalCost += (item.costPrice || 0) * item.qty;
+
       if (products[item.id]) {
         products[item.id].stock = (products[item.id].stock || 0) - item.qty;
       }
     });
 
-    sales.push({ date: new Date().toLocaleDateString('ar-EG'), total: total, timestamp: Date.now() });
+    sales.push({ 
+      date: new Date().toLocaleDateString('ar-EG'), 
+      total: total, 
+      profit: total - totalCost,
+      timestamp: Date.now() 
+    });
 
     localStorage.setItem('local_products', JSON.stringify(products));
     localStorage.setItem('local_sales', JSON.stringify(sales));
@@ -384,11 +400,13 @@
     const today = new Date().toLocaleDateString('ar-EG');
     
     const todaySales = sales.filter(s => s.date === today).reduce((sum, s) => sum + s.total, 0);
+    const todayGrossProfit = sales.filter(s => s.date === today).reduce((sum, s) => sum + (s.profit || 0), 0);
     const todayExp = expenses.filter(e => e.date === today).reduce((sum, e) => sum + e.amount, 0);
 
     document.getElementById('repSales').innerText = todaySales + ' ج.م';
+    document.getElementById('repGrossProfit').innerText = todayGrossProfit + ' ج.م';
     document.getElementById('repExp').innerText = todayExp + ' ج.م';
-    document.getElementById('repNet').innerText = (todaySales - todayExp) + ' ج.م';
+    document.getElementById('repNet').innerText = (todayGrossProfit - todayExp) + ' ج.م';
   }
 
   function toggleScanner() {
@@ -416,5 +434,5 @@
   }
 </script>
 </body>
-        </html>
-        
+</html>
+
