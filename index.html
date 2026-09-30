@@ -109,7 +109,7 @@
       <h3>إضافة منتج جديد</h3>
       <div class="form-group"><label>اسم اللعبة</label><input type="text" id="pName"></div>
       <div class="form-group"><label>الباركوود (اختياري)</label><input type="text" id="pBarcode"></div>
-      <div class="form-group"><label>سعر الشراء / الجملة (ج.م)</label><input type="number" id="pCostPrice" placeholder="تكلفة قطعة الفرد"></div>
+      <div class="form-group"><label>سعر الشراء / الجملة (ج.م)</label><input type="number" id="pCostPrice" placeholder="تكلفة القطعة عليك"></div>
       <div class="form-group"><label>سعر البيع (ج.م)</label><input type="number" id="pPrice"></div>
       <div class="form-group"><label>الكمية بالمخزن</label><input type="number" id="pStock" value="10"></div>
       <div class="form-group">
@@ -217,6 +217,27 @@
     if (tabId === 'reports') renderReports();
   }
 
+  // دالة لضغط الصور تلقائياً لتقليل حجمها قبل الحفظ
+  function compressAndSaveImage(file, callback) {
+    const reader = new FileReader();
+    reader.onload = function(e) {
+      const img = new Image();
+      img.onload = function() {
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const maxWidth = 300; // تصغير العرض ليصبح خفيفاً وسريعاً
+        const scaleSize = maxWidth / img.width;
+        canvas.width = maxWidth;
+        canvas.height = img.height * scaleSize;
+
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        callback(canvas.toDataURL('image/jpeg', 0.6)); // ضغط الجودة لـ 60%
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+
   function addProduct() {
     const name = document.getElementById('pName').value.trim();
     const barcode = document.getElementById('pBarcode').value.trim();
@@ -230,25 +251,25 @@
     const id = barcode ? 'bar_' + barcode : 'p_' + Date.now();
 
     const saveAction = (imgData) => {
-      products[id] = { name, barcode, costPrice, price, stock, img: imgData || '' };
-      localStorage.setItem('local_products', JSON.stringify(products));
-      
-      document.getElementById('pName').value = '';
-      document.getElementById('pBarcode').value = '';
-      document.getElementById('pCostPrice').value = '';
-      document.getElementById('pPrice').value = '';
-      document.getElementById('pStock').value = '10';
-      document.getElementById('pImg').value = '';
-      renderProducts();
-      alert('تم حفظ اللعبة بالمخزن بنجاح!');
+      try {
+        products[id] = { name, barcode, costPrice, price, stock, img: imgData || '' };
+        localStorage.setItem('local_products', JSON.stringify(products));
+        
+        document.getElementById('pName').value = '';
+        document.getElementById('pBarcode').value = '';
+        document.getElementById('pCostPrice').value = '';
+        document.getElementById('pPrice').value = '';
+        document.getElementById('pStock').value = '10';
+        document.getElementById('pImg').value = '';
+        renderProducts();
+        alert('تم حفظ اللعبة بالمخزن بنجاح! 🎉');
+      } catch (e) {
+        alert('⚠️ الذاكرة امتلات بالصور! اختر صورة أصغر أو احفظ بدون صورة.');
+      }
     };
 
     if (imgInput.files && imgInput.files[0]) {
-      const reader = new FileReader();
-      reader.onload = function(e) {
-        saveAction(e.target.result);
-      };
-      reader.readAsDataURL(imgInput.files[0]);
+      compressAndSaveImage(imgInput.files[0], saveAction);
     } else {
       saveAction('');
     }
