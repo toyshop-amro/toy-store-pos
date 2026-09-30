@@ -113,8 +113,8 @@
       <div class="form-group"><label>سعر البيع (ج.م)</label><input type="number" id="pPrice"></div>
       <div class="form-group"><label>الكمية بالمخزن</label><input type="number" id="pStock" value="10"></div>
       <div class="form-group">
-        <label>صورة اللعبة (التقاط بالكاميرا أو اختيار)</label>
-        <input type="file" id="pImg" accept="image/*" capture="environment">
+        <label>صورة اللعبة (اختياري)</label>
+        <input type="file" id="pImg" accept="image/*">
       </div>
       <button class="btn btn-primary" onclick="addProduct()">حفظ اللعبة بالمخزن 💾</button>
     </div>
@@ -217,7 +217,6 @@
     if (tabId === 'reports') renderReports();
   }
 
-  // دالة لضغط الصور تلقائياً لتقليل حجمها قبل الحفظ
   function compressAndSaveImage(file, callback) {
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -225,13 +224,13 @@
       img.onload = function() {
         const canvas = document.createElement('canvas');
         const ctx = canvas.getContext('2d');
-        const maxWidth = 300; // تصغير العرض ليصبح خفيفاً وسريعاً
+        const maxWidth = 200; // تصغير الصورة جداً لتأخذ مساحة صغيرة للغاية
         const scaleSize = maxWidth / img.width;
         canvas.width = maxWidth;
         canvas.height = img.height * scaleSize;
 
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        callback(canvas.toDataURL('image/jpeg', 0.6)); // ضغط الجودة لـ 60%
+        callback(canvas.toDataURL('image/jpeg', 0.5));
       };
       img.src = e.target.result;
     };
@@ -250,29 +249,36 @@
 
     const id = barcode ? 'bar_' + barcode : 'p_' + Date.now();
 
-    const saveAction = (imgData) => {
+    const executeSave = (imgData) => {
       try {
-        products[id] = { name, barcode, costPrice, price, stock, img: imgData || '' };
+        products[id] = { name, barcode, costPrice, price, stock, img: imgData };
         localStorage.setItem('local_products', JSON.stringify(products));
-        
-        document.getElementById('pName').value = '';
-        document.getElementById('pBarcode').value = '';
-        document.getElementById('pCostPrice').value = '';
-        document.getElementById('pPrice').value = '';
-        document.getElementById('pStock').value = '10';
-        document.getElementById('pImg').value = '';
-        renderProducts();
+        clearFormAndRefresh();
         alert('تم حفظ اللعبة بالمخزن بنجاح! 🎉');
       } catch (e) {
-        alert('⚠️ الذاكرة امتلات بالصور! اختر صورة أصغر أو احفظ بدون صورة.');
+        // إذا فشل بسبب مساحة الصورة، نحفظ المنتج بدون صورة تلقائياً
+        products[id] = { name, barcode, costPrice, price, stock, img: '' };
+        localStorage.setItem('local_products', JSON.stringify(products));
+        clearFormAndRefresh();
+        alert('تم حفظ اللعبة بنجاح! (تم إزالة الصورة لأن ذاكرة المتصفح ممتلئة)');
       }
     };
 
     if (imgInput.files && imgInput.files[0]) {
-      compressAndSaveImage(imgInput.files[0], saveAction);
+      compressAndSaveImage(imgInput.files[0], executeSave);
     } else {
-      saveAction('');
+      executeSave('');
     }
+  }
+
+  function clearFormAndRefresh() {
+    document.getElementById('pName').value = '';
+    document.getElementById('pBarcode').value = '';
+    document.getElementById('pCostPrice').value = '';
+    document.getElementById('pPrice').value = '';
+    document.getElementById('pStock').value = '10';
+    document.getElementById('pImg').value = '';
+    renderProducts();
   }
 
   function renderProducts() {
