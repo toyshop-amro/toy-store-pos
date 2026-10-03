@@ -42,9 +42,9 @@ button{border:0;border-radius:8px;font-size:15px;font-weight:bold;color:#fff;bac
 .pr-in{width:70px;padding:6px;font-size:14px;text-align:center;border:1px solid #1a73e8}
 .total{display:flex;justify-content:space-between;font-size:18px;font-weight:bold;margin-top:12px;color:#137333}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#1a73e8;padding:8px 0;z-index:10}
-nav button{flex:1;background:none;border-radius:0;font-size:13px}
+nav button{flex:1;background:none;border-radius:0;font-size:12px;padding:8px 2px}
 nav button.act{color:#ffe600}
-#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#202124;color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;display:none;z-index:20}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#202124;color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;display:none;z-index:60;text-align:center}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 #prev{width:70px;height:70px;object-fit:cover;border-radius:8px;display:none;margin:8px auto 0}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
@@ -53,8 +53,10 @@ nav button.act{color:#ffe600}
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
 .cd{background:#f8f9fa;border:1px solid #dadce0;border-radius:10px;padding:10px;text-align:center;font-size:12px;color:#5f6368}
 .cd b{display:block;font-size:17px;color:#137333;margin-top:4px}
-.cd b.bl{color:#1a73e8}.cd b.rd{color:#c5221f}
+.cd b.bl{color:#1a73e8}
 .mut{text-align:center;color:#777;padding:8px;font-size:13px}
+.modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);align-items:center;justify-content:center;z-index:50;padding:20px}
+.modal .box{width:100%;max-width:320px;margin:0}
 </style>
 </head>
 <body>
@@ -141,11 +143,38 @@ nav button.act{color:#ffe600}
     </div>
   </div>
 
+  <div id="setTab" style="display:none">
+    <div class="box">
+      <h1>⚙️ الإعدادات</h1>
+      <h2>تغيير كلمة سر المدير</h2>
+      <label>كلمة السر الحالية</label>
+      <input id="cPin" type="password" inputmode="numeric">
+      <label>كلمة السر الجديدة</label>
+      <input id="nPin1" type="password" inputmode="numeric">
+      <label>أعد كتابة الجديدة</label>
+      <input id="nPin2" type="password" inputmode="numeric">
+      <button id="chgBtn" class="full">حفظ كلمة السر الجديدة 🔑</button>
+      <button id="lockBtn" class="gray full">🔒 قفل الآن</button>
+    </div>
+  </div>
+
   <nav>
     <button id="tabPos" class="act">🛒 الكاشير</button>
     <button id="tabStock">📦 المنتجات</button>
     <button id="tabRep">📊 التقارير</button>
+    <button id="tabSet">⚙️ الإعدادات</button>
   </nav>
+</div>
+
+<div id="pinModal" class="modal">
+  <div class="box">
+    <h2 id="pinTitle" style="margin-top:0"></h2>
+    <input id="pin1" type="password" inputmode="numeric" placeholder="كلمة السر">
+    <input id="pin2" type="password" inputmode="numeric" placeholder="أعد كتابتها" style="display:none;margin-top:8px">
+    <button id="pinOk" class="full">دخول</button>
+    <button id="pinCancel" class="gray full">إلغاء</button>
+    <div id="pinErr" class="msg"></div>
+  </div>
 </div>
 <div id="toast"></div>
 
@@ -172,6 +201,7 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const num = n => Math.round((Number(n) || 0) * 100) / 100;
 let products = {}, sales = [], cart = [], imgData = '', unsubs = [], per = 'day';
+let adminHash = null, pinStatus = 'loading', unlocked = false, pending = null;
 
 function toast(t) {
   const el = $('toast'); el.textContent = t; el.style.display = 'block';
@@ -185,6 +215,10 @@ function showNet() {
 addEventListener('online', showNet); addEventListener('offline', showNet); showNet();
 
 const imgHtml = p => p.img ? `<img src="${p.img}" alt="">` : `<div class="ph">🧸</div>`;
+async function sha(s) {
+  const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('toypos:' + s));
+  return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
+}
 
 /* ---------- الدخول ---------- */
 const errors = {
@@ -204,8 +238,10 @@ onAuthStateChanged(auth, user => {
   $('loginView').style.display = user ? 'none' : 'block';
   $('appView').style.display = user ? 'block' : 'none';
   unsubs.forEach(f => f()); unsubs = [];
+  unlocked = false; adminHash = null; pinStatus = 'loading';
   if (user) {
     $('who').textContent = user.email;
+    tab('pos');
     unsubs.push(onSnapshot(collection(db, 'products'), snap => {
       products = {};
       snap.forEach(d => products[d.id] = d.data());
@@ -216,22 +252,65 @@ onAuthStateChanged(auth, user => {
       snap.forEach(d => sales.push(d.data()));
       renderReports();
     }, e => toast('خطأ في التحميل: ' + e.code)));
+    unsubs.push(onSnapshot(doc(db, 'settings', 'admin'), snap => {
+      if (snap.exists()) { adminHash = snap.data().pin; pinStatus = 'set'; }
+      else if (!snap.metadata.fromCache) { adminHash = null; pinStatus = 'none'; }
+    }, e => toast('خطأ: ' + e.code)));
   } else { products = {}; sales = []; cart = []; }
 });
 
-/* ---------- التبويبات ---------- */
+/* ---------- التبويبات + القفل ---------- */
+const TABS = { pos: ['posTab', 'tabPos'], stock: ['stockTab', 'tabStock'], rep: ['repTab', 'tabRep'], set: ['setTab', 'tabSet'] };
 function tab(name) {
-  $('posTab').style.display = name === 'pos' ? 'block' : 'none';
-  $('stockTab').style.display = name === 'stock' ? 'block' : 'none';
-  $('repTab').style.display = name === 'rep' ? 'block' : 'none';
-  $('tabPos').className = name === 'pos' ? 'act' : '';
-  $('tabStock').className = name === 'stock' ? 'act' : '';
-  $('tabRep').className = name === 'rep' ? 'act' : '';
+  if (name !== 'pos' && !unlocked) { openPin(name); return; }
+  if (name === 'pos') unlocked = false; // الرجوع للكاشير بيقفل تاني
+  Object.entries(TABS).forEach(([k, [s, b]]) => {
+    $(s).style.display = k === name ? 'block' : 'none';
+    $(b).className = k === name ? 'act' : '';
+  });
   scrollTo(0, 0);
 }
-$('tabPos').onclick = () => tab('pos');
-$('tabStock').onclick = () => tab('stock');
-$('tabRep').onclick = () => tab('rep');
+Object.entries(TABS).forEach(([k, [, b]]) => $(b).onclick = () => tab(k));
+
+function pinErr(t) { $('pinErr').textContent = t; $('pinErr').style.display = 'block'; }
+function openPin(target) {
+  if (pinStatus === 'loading') return toast('جاري تحميل الإعدادات، جرّب بعد ثواني (محتاج نت أول مرة)');
+  pending = target;
+  const first = pinStatus === 'none';
+  $('pinTitle').textContent = first ? 'اعمل كلمة سر للمدير (أول مرة)' : 'أدخل كلمة سر المدير';
+  $('pin2').style.display = first ? 'block' : 'none';
+  $('pin1').value = ''; $('pin2').value = ''; $('pinErr').style.display = 'none';
+  $('pinModal').style.display = 'flex'; $('pin1').focus();
+}
+$('pinCancel').onclick = () => $('pinModal').style.display = 'none';
+$('pin1').onkeydown = $('pin2').onkeydown = e => { if (e.key === 'Enter') $('pinOk').click(); };
+$('pinOk').onclick = async () => {
+  const p = $('pin1').value;
+  if (p.length < 4) return pinErr('لازم 4 أرقام أو حروف على الأقل');
+  if (pinStatus === 'none') {
+    if (p !== $('pin2').value) return pinErr('الكلمتين مش متطابقتين');
+    const h = await sha(p);
+    setDoc(doc(db, 'settings', 'admin'), { pin: h }).catch(e => toast('تعذر الحفظ: ' + e.code));
+    adminHash = h; pinStatus = 'set';
+  } else if (await sha(p) !== adminHash) return pinErr('كلمة السر غلط');
+  unlocked = true;
+  $('pinModal').style.display = 'none';
+  tab(pending);
+};
+
+/* ---------- الإعدادات ---------- */
+$('chgBtn').onclick = async () => {
+  const n = $('nPin1').value;
+  if (await sha($('cPin').value) !== adminHash) return toast('كلمة السر الحالية غلط');
+  if (n.length < 4) return toast('الجديدة لازم 4 على الأقل');
+  if (n !== $('nPin2').value) return toast('الكلمتين الجداد مش متطابقتين');
+  const h = await sha(n);
+  setDoc(doc(db, 'settings', 'admin'), { pin: h }).catch(e => toast('تعذر الحفظ: ' + e.code));
+  adminHash = h;
+  ['cPin', 'nPin1', 'nPin2'].forEach(id => $(id).value = '');
+  toast('تم تغيير كلمة السر ✅');
+};
+$('lockBtn').onclick = () => { unlocked = false; tab('pos'); };
 
 /* ---------- الكاشير ---------- */
 function renderGrid() {
