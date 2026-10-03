@@ -47,6 +47,14 @@ nav button.act{color:#ffe600}
 #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#202124;color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;display:none;z-index:20}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
 #prev{width:70px;height:70px;object-fit:cover;border-radius:8px;display:none;margin:8px auto 0}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
+.seg button{background:#e4e6eb;color:#333}
+.seg button.sel{background:#1a73e8;color:#fff}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.cd{background:#f8f9fa;border:1px solid #dadce0;border-radius:10px;padding:10px;text-align:center;font-size:12px;color:#5f6368}
+.cd b{display:block;font-size:17px;color:#137333;margin-top:4px}
+.cd b.bl{color:#1a73e8}.cd b.rd{color:#c5221f}
+.mut{text-align:center;color:#777;padding:8px;font-size:13px}
 </style>
 </head>
 <body>
@@ -100,9 +108,43 @@ nav button.act{color:#ffe600}
     </div>
   </div>
 
+  <div id="repTab" style="display:none">
+    <div class="box">
+      <h1>📊 تقرير المبيعات</h1>
+      <div class="seg">
+        <button id="pDay" class="sel">اليوم</button>
+        <button id="pWeek">آخر 7 أيام</button>
+        <button id="pMonth">الشهر</button>
+      </div>
+      <div class="cards">
+        <div class="cd">عدد الفواتير<b class="bl" id="rCount">0</b></div>
+        <div class="cd">إجمالي المبيعات<b id="rSales">0 ج.م</b></div>
+      </div>
+      <div class="cards">
+        <div class="cd" style="grid-column:1/-1">ربح المبيعات<b id="rProfit">0 ج.م</b></div>
+      </div>
+      <h2>الأكثر مبيعًا</h2>
+      <div id="topList"></div>
+      <h2>الفواتير</h2>
+      <div id="salesList"></div>
+    </div>
+    <div class="box">
+      <h1>📦 جرد المخزن</h1>
+      <div class="cards">
+        <div class="cd">عدد القطع<b class="bl" id="iQty">0</b></div>
+        <div class="cd">رأس المال (بالتكلفة)<b id="iCost" style="color:#b06000">0 ج.م</b></div>
+        <div class="cd">قيمة البيع المتوقعة<b id="iVal">0 ج.م</b></div>
+        <div class="cd">الربح المتوقع<b class="bl" id="iProfit">0 ج.م</b></div>
+      </div>
+      <h2>⚠️ منتجات قربت تخلص (5 أو أقل)</h2>
+      <div id="lowList"></div>
+    </div>
+  </div>
+
   <nav>
     <button id="tabPos" class="act">🛒 الكاشير</button>
     <button id="tabStock">📦 المنتجات</button>
+    <button id="tabRep">📊 التقارير</button>
   </nav>
 </div>
 <div id="toast"></div>
@@ -129,7 +171,7 @@ const db = initializeFirestore(app, {
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const num = n => Math.round((Number(n) || 0) * 100) / 100;
-let products = {}, cart = [], imgData = '', unsub = null;
+let products = {}, sales = [], cart = [], imgData = '', unsubs = [], per = 'day';
 
 function toast(t) {
   const el = $('toast'); el.textContent = t; el.style.display = 'block';
@@ -161,26 +203,35 @@ $('logoutBtn').onclick = () => signOut(auth);
 onAuthStateChanged(auth, user => {
   $('loginView').style.display = user ? 'none' : 'block';
   $('appView').style.display = user ? 'block' : 'none';
-  if (unsub) { unsub(); unsub = null; }
+  unsubs.forEach(f => f()); unsubs = [];
   if (user) {
     $('who').textContent = user.email;
-    unsub = onSnapshot(collection(db, 'products'), snap => {
+    unsubs.push(onSnapshot(collection(db, 'products'), snap => {
       products = {};
       snap.forEach(d => products[d.id] = d.data());
-      renderGrid(); renderStock(); renderCart();
-    }, e => toast('خطأ في التحميل: ' + e.code));
-  } else { products = {}; cart = []; }
+      renderGrid(); renderStock(); renderCart(); renderReports();
+    }, e => toast('خطأ في التحميل: ' + e.code)));
+    unsubs.push(onSnapshot(collection(db, 'sales'), snap => {
+      sales = [];
+      snap.forEach(d => sales.push(d.data()));
+      renderReports();
+    }, e => toast('خطأ في التحميل: ' + e.code)));
+  } else { products = {}; sales = []; cart = []; }
 });
 
 /* ---------- التبويبات ---------- */
 function tab(name) {
   $('posTab').style.display = name === 'pos' ? 'block' : 'none';
   $('stockTab').style.display = name === 'stock' ? 'block' : 'none';
+  $('repTab').style.display = name === 'rep' ? 'block' : 'none';
   $('tabPos').className = name === 'pos' ? 'act' : '';
   $('tabStock').className = name === 'stock' ? 'act' : '';
+  $('tabRep').className = name === 'rep' ? 'act' : '';
+  scrollTo(0, 0);
 }
 $('tabPos').onclick = () => tab('pos');
 $('tabStock').onclick = () => tab('stock');
+$('tabRep').onclick = () => tab('rep');
 
 /* ---------- الكاشير ---------- */
 function renderGrid() {
@@ -212,7 +263,7 @@ function renderCart() {
       <div class="qty"><button class="sm" data-act="dec">−</button><b>${c.qty}</b><button class="sm" data-act="inc">+</button></div>
       <input class="pr-in" type="number" inputmode="decimal" value="${c.price}">
       <button class="red sm" data-act="del">✕</button></div>`;
-  }).join('') : '<p style="text-align:center;color:#777;padding:10px">السلة فاضية</p>';
+  }).join('') : '<p class="mut">السلة فاضية</p>';
   $('total').textContent = num(total) + ' ج.م';
 }
 $('cart').onclick = e => {
@@ -290,7 +341,7 @@ function renderStock() {
       <div class="info">${esc(p.name)}<small>شراء ${num(p.cost)} | بيع ${num(p.price)} | كمية ${p.stock ?? 0}</small></div>
       <button class="amber sm" data-act="edit">تعديل</button>
       <button class="red sm" data-act="del">حذف</button></div>`;
-  }).join('') : '<p style="text-align:center;color:#777">لا توجد منتجات بعد</p>';
+  }).join('') : '<p class="mut">لا توجد منتجات بعد</p>';
 }
 $('stockList').onclick = e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
@@ -306,8 +357,65 @@ $('stockList').onclick = e => {
   }
 };
 
+/* ---------- التقارير ---------- */
+function setPer(p) {
+  per = p;
+  $('pDay').className = p === 'day' ? 'sel' : '';
+  $('pWeek').className = p === 'week' ? 'sel' : '';
+  $('pMonth').className = p === 'month' ? 'sel' : '';
+  renderReports();
+}
+$('pDay').onclick = () => setPer('day');
+$('pWeek').onclick = () => setPer('week');
+$('pMonth').onclick = () => setPer('month');
+
+function renderReports() {
+  const now = new Date();
+  let from;
+  if (per === 'day') from = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  else if (per === 'week') from = Date.now() - 7 * 864e5;
+  else from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+
+  const list = sales.filter(s => s.ts >= from).sort((a, b) => b.ts - a.ts);
+  let tot = 0, pro = 0; const top = {};
+  list.forEach(s => {
+    tot += s.total || 0; pro += s.profit || 0;
+    (s.items || []).forEach(i => {
+      const t = top[i.name] || (top[i.name] = { q: 0, v: 0 });
+      t.q += i.qty; t.v += i.price * i.qty;
+    });
+  });
+  $('rCount').textContent = list.length;
+  $('rSales').textContent = num(tot) + ' ج.م';
+  $('rProfit').textContent = num(pro) + ' ج.م';
+
+  const tops = Object.entries(top).sort((a, b) => b[1].q - a[1].q).slice(0, 5);
+  $('topList').innerHTML = tops.length ? tops.map(([n, t]) =>
+    `<div class="row"><div class="info">${esc(n)}<small>${t.q} قطعة | ${num(t.v)} ج.م</small></div></div>`).join('')
+    : '<p class="mut">لا توجد مبيعات في الفترة دي</p>';
+
+  $('salesList').innerHTML = list.length ? list.slice(0, 50).map(s => {
+    const d = new Date(s.ts).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' });
+    const cnt = (s.items || []).reduce((a, i) => a + i.qty, 0);
+    return `<div class="row"><div class="info">${d}<small>${cnt} قطعة | ${esc((s.user || '').split('@')[0])}</small></div>
+      <div style="text-align:left"><b style="color:#137333">${num(s.total)} ج.م</b><small style="display:block;color:#1a73e8">ربح ${num(s.profit)}</small></div></div>`;
+  }).join('') : '<p class="mut">لا توجد فواتير</p>';
+
+  let q = 0, c = 0, v = 0;
+  const all = Object.values(products);
+  all.forEach(p => { const s = p.stock || 0; q += s; c += s * (p.cost || 0); v += s * (p.price || 0); });
+  $('iQty').textContent = q;
+  $('iCost').textContent = num(c) + ' ج.م';
+  $('iVal').textContent = num(v) + ' ج.م';
+  $('iProfit').textContent = num(v - c) + ' ج.م';
+  const low = all.filter(p => (p.stock || 0) <= 5).sort((a, b) => (a.stock || 0) - (b.stock || 0));
+  $('lowList').innerHTML = low.length ? low.map(p =>
+    `<div class="row">${imgHtml(p)}<div class="info">${esc(p.name)}<small style="color:#c5221f">المتبقي: ${p.stock || 0}</small></div></div>`).join('')
+    : '<p class="mut">كل المنتجات كميتها كويسة ✅</p>';
+}
+
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
-</html>
+  </html>
 
