@@ -6,53 +6,111 @@
 <title>كاشير محل الألعاب</title>
 <meta name="theme-color" content="#1a73e8">
 <link rel="manifest" href="manifest.json">
-<link rel="icon" href="icon-192.png">
-<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="icon" href="icon-192-5.png">
+<link rel="apple-touch-icon" href="icon-192-5.png">
 <style>
-  * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, sans-serif; }
-  body { background: #f0f2f5; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 16px; color: #333; }
-  .box { background: #fff; width: 100%; max-width: 380px; padding: 24px; border-radius: 14px; box-shadow: 0 4px 15px rgba(0,0,0,.1); }
-  h1 { color: #1a73e8; text-align: center; font-size: 22px; margin-bottom: 16px; }
-  label { display: block; font-size: 13px; font-weight: 600; margin: 10px 0 4px; }
-  input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 16px; direction: ltr; text-align: left; }
-  button { width: 100%; padding: 12px; margin-top: 14px; border: 0; border-radius: 8px; font-size: 16px; font-weight: bold; color: #fff; background: #1a73e8; cursor: pointer; }
-  button.red { background: #ea4335; }
-  .msg { margin-top: 12px; padding: 10px; border-radius: 8px; font-size: 14px; text-align: center; display: none; }
-  .msg.err { display: block; background: #fce8e6; color: #c5221f; }
-  .status { display: flex; justify-content: space-between; margin-top: 16px; font-size: 13px; font-weight: bold; }
-  .on { color: #137333; } .off { color: #b06000; }
-  #appView { display: none; }
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,sans-serif}
+body{background:#f0f2f5;color:#333;padding:10px 10px 80px}
+.box{background:#fff;padding:16px;border-radius:14px;box-shadow:0 4px 15px rgba(0,0,0,.1);margin-bottom:12px}
+#loginView{max-width:380px;margin:12vh auto 0}
+h1{color:#1a73e8;text-align:center;font-size:21px;margin-bottom:12px}
+h2{color:#3c4043;font-size:16px;margin:14px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px}
+label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
+input{width:100%;padding:11px;border:1px solid #ccc;border-radius:8px;font-size:16px}
+.ltr{direction:ltr;text-align:left}
+button{border:0;border-radius:8px;font-size:15px;font-weight:bold;color:#fff;background:#1a73e8;padding:11px;cursor:pointer}
+.full{width:100%;margin-top:12px}
+.red{background:#ea4335}.green{background:#34a853}.gray{background:#80868b}.amber{background:#f9ab00}
+.sm{padding:6px 10px;font-size:13px}
+.msg{margin-top:12px;padding:10px;border-radius:8px;font-size:14px;text-align:center;display:none;background:#fce8e6;color:#c5221f}
+#appView{display:none}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;font-weight:bold}
+.on{color:#137333}.off{color:#b06000}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:8px;margin-top:10px;max-height:340px;overflow-y:auto}
+.p{background:#fff;border:2px solid #e0e0e0;border-radius:10px;padding:6px;text-align:center;cursor:pointer}
+.p:active{border-color:#1a73e8}
+.p img,.ph{width:100%;height:70px;object-fit:cover;border-radius:6px;background:#eee;display:flex;align-items:center;justify-content:center;font-size:28px}
+.p .n{font-size:12px;font-weight:bold;margin-top:4px}
+.p .pr{color:#137333;font-size:12px;font-weight:bold}
+.p .st{font-size:11px;color:#1a73e8}
+.row{display:flex;align-items:center;gap:6px;padding:8px 0;border-bottom:1px solid #eee}
+.row img,.row .ph{width:44px;height:44px;font-size:20px;flex-shrink:0}
+.row .info{flex:1;min-width:0;font-size:13px;font-weight:bold}
+.row .info small{display:block;color:#777;font-weight:normal}
+.qty{display:flex;align-items:center;gap:4px}
+.qty button{padding:2px 9px;font-size:16px}
+.pr-in{width:70px;padding:6px;font-size:14px;text-align:center;border:1px solid #1a73e8}
+.total{display:flex;justify-content:space-between;font-size:18px;font-weight:bold;margin-top:12px;color:#137333}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#1a73e8;padding:8px 0;z-index:10}
+nav button{flex:1;background:none;border-radius:0;font-size:13px}
+nav button.act{color:#ffe600}
+#toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#202124;color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;display:none;z-index:20}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+#prev{width:70px;height:70px;object-fit:cover;border-radius:8px;display:none;margin:8px auto 0}
 </style>
 </head>
 <body>
-<div class="box">
+
+<div id="loginView" class="box">
   <h1>🧸 كاشير محل الألعاب</h1>
-
-  <div id="loginView">
-    <label for="email">البريد الإلكتروني</label>
-    <input id="email" type="email" autocomplete="username" placeholder="admin@cashier.com">
-    <label for="pass">كلمة السر</label>
-    <input id="pass" type="password" autocomplete="current-password">
-    <button id="loginBtn">دخول</button>
-    <div id="err" class="msg"></div>
-  </div>
-
-  <div id="appView">
-    <p style="text-align:center;font-size:17px;font-weight:bold;color:#137333">✅ تم الربط بـ Firebase بنجاح</p>
-    <p style="text-align:center;margin-top:8px;direction:ltr" id="who"></p>
-    <button id="logoutBtn" class="red">تسجيل الخروج</button>
-  </div>
-
-  <div class="status">
-    <span id="net"></span>
-    <span id="fs">قاعدة البيانات: جاري الاتصال...</span>
-  </div>
+  <label for="email">البريد الإلكتروني</label>
+  <input id="email" type="email" class="ltr" autocomplete="username">
+  <label for="pass">كلمة السر</label>
+  <input id="pass" type="password" class="ltr" autocomplete="current-password">
+  <button id="loginBtn" class="full">دخول</button>
+  <div id="err" class="msg"></div>
 </div>
+
+<div id="appView">
+  <div class="top">
+    <span id="net"></span>
+    <span id="who" class="ltr"></span>
+    <button id="logoutBtn" class="red sm">خروج</button>
+  </div>
+
+  <div id="posTab" class="box">
+    <h1>🧸 الكاشير</h1>
+    <input id="search" placeholder="🔍 ابحث عن لعبة...">
+    <div id="grid" class="grid"></div>
+    <h2>🛒 الفاتورة</h2>
+    <div id="cart"></div>
+    <div class="total"><span>الإجمالي:</span><span id="total">0 ج.م</span></div>
+    <button id="checkoutBtn" class="green full">إتمام البيع 🧾</button>
+  </div>
+
+  <div id="stockTab" style="display:none">
+    <div class="box">
+      <h1>📦 إضافة / تعديل منتج</h1>
+      <input type="hidden" id="pId">
+      <label>اسم اللعبة</label><input id="pName">
+      <div class="two">
+        <div><label>سعر الشراء</label><input id="pCost" type="number" inputmode="decimal"></div>
+        <div><label>سعر البيع</label><input id="pPrice" type="number" inputmode="decimal"></div>
+      </div>
+      <label>الكمية بالمخزن</label><input id="pStock" type="number" inputmode="numeric">
+      <label>صورة اللعبة</label>
+      <input id="pFile" type="file" accept="image/*">
+      <img id="prev" alt="">
+      <button id="saveBtn" class="full">حفظ المنتج 💾</button>
+      <button id="cancelBtn" class="gray full" style="display:none">إلغاء التعديل</button>
+    </div>
+    <div class="box">
+      <h2>المنتجات المسجلة</h2>
+      <div id="stockList"></div>
+    </div>
+  </div>
+
+  <nav>
+    <button id="tabPos" class="act">🛒 الكاشير</button>
+    <button id="tabStock">📦 المنتجات</button>
+  </nav>
+</div>
+<div id="toast"></div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, onSnapshot, setDoc, deleteDoc, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const app = initializeApp({
   apiKey: "AIzaSyDQ5vyabx8OEW9BYFou7P50VU0rf3FGANU",
@@ -63,47 +121,190 @@ const app = initializeApp({
   messagingSenderId: "389217581078",
   appId: "1:389217581078:web:7ba820c6f9995b721fdd37"
 });
-
 const auth = getAuth(app);
-// تخزين محلي دائم: يخلي التطبيق يشتغل من غير نت ويزامن لما النت يرجع
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
 });
-window.db = db; window.auth = auth;
 
 const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const num = n => Math.round((Number(n) || 0) * 100) / 100;
+let products = {}, cart = [], imgData = '', unsub = null;
 
+function toast(t) {
+  const el = $('toast'); el.textContent = t; el.style.display = 'block';
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = 'none', 2500);
+}
 function showNet() {
   const on = navigator.onLine;
-  $('net').textContent = on ? '🟢 متصل بالنت' : '🟠 بدون نت (الشغل محفوظ)';
+  $('net').textContent = on ? '🟢 متصل' : '🟠 بدون نت (الشغل محفوظ)';
   $('net').className = on ? 'on' : 'off';
 }
 addEventListener('online', showNet); addEventListener('offline', showNet); showNet();
-$('fs').textContent = 'قاعدة البيانات: جاهزة ✅';
 
+const imgHtml = p => p.img ? `<img src="${p.img}" alt="">` : `<div class="ph">🧸</div>`;
+
+/* ---------- الدخول ---------- */
 const errors = {
   'auth/invalid-credential': 'البريد أو كلمة السر غلط',
   'auth/invalid-email': 'اكتب البريد بشكل صحيح',
-  'auth/too-many-requests': 'محاولات كتير، استنى شوية وجرب تاني',
+  'auth/too-many-requests': 'محاولات كتير، استنى شوية',
   'auth/network-request-failed': 'مفيش نت. أول دخول لازم يكون بالنت'
 };
-
 $('loginBtn').onclick = async () => {
-  $('err').className = 'msg';
-  try {
-    await signInWithEmailAndPassword(auth, $('email').value.trim(), $('pass').value);
-  } catch (e) {
-    $('err').textContent = errors[e.code] || ('حصل خطأ: ' + e.code);
-    $('err').className = 'msg err';
-  }
+  $('err').style.display = 'none';
+  try { await signInWithEmailAndPassword(auth, $('email').value.trim(), $('pass').value); }
+  catch (e) { $('err').textContent = errors[e.code] || ('خطأ: ' + e.code); $('err').style.display = 'block'; }
 };
 $('logoutBtn').onclick = () => signOut(auth);
 
 onAuthStateChanged(auth, user => {
   $('loginView').style.display = user ? 'none' : 'block';
   $('appView').style.display = user ? 'block' : 'none';
-  if (user) $('who').textContent = user.email;
+  if (unsub) { unsub(); unsub = null; }
+  if (user) {
+    $('who').textContent = user.email;
+    unsub = onSnapshot(collection(db, 'products'), snap => {
+      products = {};
+      snap.forEach(d => products[d.id] = d.data());
+      renderGrid(); renderStock(); renderCart();
+    }, e => toast('خطأ في التحميل: ' + e.code));
+  } else { products = {}; cart = []; }
 });
+
+/* ---------- التبويبات ---------- */
+function tab(name) {
+  $('posTab').style.display = name === 'pos' ? 'block' : 'none';
+  $('stockTab').style.display = name === 'stock' ? 'block' : 'none';
+  $('tabPos').className = name === 'pos' ? 'act' : '';
+  $('tabStock').className = name === 'stock' ? 'act' : '';
+}
+$('tabPos').onclick = () => tab('pos');
+$('tabStock').onclick = () => tab('stock');
+
+/* ---------- الكاشير ---------- */
+function renderGrid() {
+  const q = $('search').value.trim().toLowerCase();
+  const ids = Object.keys(products).filter(id => !q || (products[id].name || '').toLowerCase().includes(q));
+  $('grid').innerHTML = ids.length ? ids.map(id => {
+    const p = products[id];
+    return `<div class="p" data-id="${id}">${imgHtml(p)}<div class="n">${esc(p.name)}</div><div class="pr">${num(p.price)} ج.م</div><div class="st">المتبقي: ${p.stock ?? 0}</div></div>`;
+  }).join('') : '<p style="grid-column:1/-1;text-align:center;color:#777">لا توجد منتجات</p>';
+}
+$('search').oninput = renderGrid;
+$('grid').onclick = e => {
+  const c = e.target.closest('[data-id]'); if (!c) return;
+  const id = c.dataset.id, p = products[id];
+  if ((p.stock ?? 0) <= 0) return toast('المنتج خلص من المخزن');
+  const ex = cart.find(i => i.id === id);
+  if (ex) { if (ex.qty >= p.stock) return toast('الكمية المتاحة ' + p.stock); ex.qty++; }
+  else cart.push({ id, name: p.name, cost: p.cost || 0, price: p.price, qty: 1 });
+  renderCart();
+};
+
+function renderCart() {
+  let total = 0;
+  $('cart').innerHTML = cart.length ? cart.map((c, i) => {
+    total += c.price * c.qty;
+    const p = products[c.id] || {};
+    return `<div class="row" data-i="${i}">${imgHtml(p)}
+      <div class="info">${esc(c.name)}<small>${num(c.price * c.qty)} ج.م</small></div>
+      <div class="qty"><button class="sm" data-act="dec">−</button><b>${c.qty}</b><button class="sm" data-act="inc">+</button></div>
+      <input class="pr-in" type="number" inputmode="decimal" value="${c.price}">
+      <button class="red sm" data-act="del">✕</button></div>`;
+  }).join('') : '<p style="text-align:center;color:#777;padding:10px">السلة فاضية</p>';
+  $('total').textContent = num(total) + ' ج.م';
+}
+$('cart').onclick = e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const i = +b.closest('[data-i]').dataset.i, c = cart[i], p = products[c.id] || {};
+  if (b.dataset.act === 'inc') { if (c.qty >= (p.stock ?? 0)) return toast('الكمية المتاحة ' + (p.stock ?? 0)); c.qty++; }
+  if (b.dataset.act === 'dec') { c.qty--; if (c.qty <= 0) cart.splice(i, 1); }
+  if (b.dataset.act === 'del') cart.splice(i, 1);
+  renderCart();
+};
+// تحديد سعر البيع وقت البيع
+$('cart').onchange = e => {
+  if (!e.target.classList.contains('pr-in')) return;
+  const i = +e.target.closest('[data-i]').dataset.i;
+  cart[i].price = parseFloat(e.target.value) || 0;
+  renderCart();
+};
+
+$('checkoutBtn').onclick = () => {
+  if (!cart.length) return toast('السلة فاضية');
+  let total = 0, profit = 0;
+  const items = cart.map(c => {
+    total += c.price * c.qty; profit += (c.price - c.cost) * c.qty;
+    return { id: c.id, name: c.name, qty: c.qty, price: c.price, cost: c.cost };
+  });
+  const batch = writeBatch(db);
+  batch.set(doc(collection(db, 'sales')), { items, total: num(total), profit: num(profit), user: auth.currentUser.email, ts: Date.now() });
+  items.forEach(it => { if (products[it.id]) batch.update(doc(db, 'products', it.id), { stock: increment(-it.qty) }); });
+  batch.commit().catch(e => toast('تعذر حفظ الفاتورة: ' + e.code)); // من غير await عشان يشتغل أوفلاين
+  cart = []; renderCart();
+  toast('تم البيع ✅ ' + num(total) + ' ج.م');
+};
+
+/* ---------- المنتجات ---------- */
+function compress(file, cb) {
+  const r = new FileReader();
+  r.onload = e => {
+    const im = new Image();
+    im.onload = () => {
+      const w = 240, h = Math.round(im.height * w / im.width);
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      c.getContext('2d').drawImage(im, 0, 0, w, h);
+      cb(c.toDataURL('image/jpeg', 0.6));
+    };
+    im.src = e.target.result;
+  };
+  r.readAsDataURL(file);
+}
+$('pFile').onchange = e => {
+  const f = e.target.files[0]; if (!f) return;
+  compress(f, d => { imgData = d; $('prev').src = d; $('prev').style.display = 'block'; });
+};
+function resetForm() {
+  ['pId', 'pName', 'pCost', 'pPrice', 'pStock', 'pFile'].forEach(id => $(id).value = '');
+  imgData = ''; $('prev').style.display = 'none';
+  $('saveBtn').textContent = 'حفظ المنتج 💾'; $('cancelBtn').style.display = 'none';
+}
+$('cancelBtn').onclick = resetForm;
+$('saveBtn').onclick = () => {
+  const name = $('pName').value.trim(), price = parseFloat($('pPrice').value) || 0;
+  if (!name || price <= 0) return toast('اكتب الاسم وسعر البيع');
+  const id = $('pId').value;
+  const ref = id ? doc(db, 'products', id) : doc(collection(db, 'products'));
+  setDoc(ref, {
+    name, price, cost: parseFloat($('pCost').value) || 0,
+    stock: parseInt($('pStock').value) || 0, img: imgData || ''
+  }).catch(e => toast('تعذر الحفظ: ' + e.code));
+  resetForm(); toast('تم الحفظ ✅');
+};
+function renderStock() {
+  const ids = Object.keys(products);
+  $('stockList').innerHTML = ids.length ? ids.map(id => {
+    const p = products[id];
+    return `<div class="row" data-id="${id}">${imgHtml(p)}
+      <div class="info">${esc(p.name)}<small>شراء ${num(p.cost)} | بيع ${num(p.price)} | كمية ${p.stock ?? 0}</small></div>
+      <button class="amber sm" data-act="edit">تعديل</button>
+      <button class="red sm" data-act="del">حذف</button></div>`;
+  }).join('') : '<p style="text-align:center;color:#777">لا توجد منتجات بعد</p>';
+}
+$('stockList').onclick = e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const id = b.closest('[data-id]').dataset.id, p = products[id];
+  if (b.dataset.act === 'del') {
+    if (confirm('حذف ' + p.name + '؟')) deleteDoc(doc(db, 'products', id)).catch(e => toast('تعذر الحذف: ' + e.code));
+  } else {
+    $('pId').value = id; $('pName').value = p.name; $('pCost').value = p.cost;
+    $('pPrice').value = p.price; $('pStock').value = p.stock; imgData = p.img || '';
+    if (imgData) { $('prev').src = imgData; $('prev').style.display = 'block'; }
+    $('saveBtn').textContent = 'تحديث المنتج 🔄'; $('cancelBtn').style.display = 'block';
+    scrollTo({ top: 0, behavior: 'smooth' });
+  }
+};
 
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
