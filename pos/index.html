@@ -25,6 +25,7 @@ button{border:0;border-radius:8px;font-size:15px;font-weight:bold;color:#fff;bac
 .msg{margin-top:12px;padding:10px;border-radius:8px;font-size:14px;text-align:center;display:none;background:#fce8e6;color:#c5221f}
 #appView{display:none}
 .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:10px;font-size:13px;font-weight:bold}
+.inst{display:none}
 .on{color:#137333}.off{color:#b06000}
 .srow{display:flex;gap:6px}.srow input{flex:1}.srow button{white-space:nowrap}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(105px,1fr));gap:8px;margin-top:10px;max-height:340px;overflow-y:auto}
@@ -63,18 +64,19 @@ nav button.act{color:#ffe600}
 .note{font-size:12px;color:#5f6368;margin-top:8px;line-height:1.6}
 .modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);align-items:center;justify-content:center;z-index:50;padding:20px}
 .modal .box{width:100%;max-width:340px;margin:0}
-#rcText{white-space:pre-wrap;font-family:inherit;font-size:14px;background:#f8f9fa;padding:10px;border-radius:8px;max-height:40vh;overflow:auto}
+#rcText,#shText{white-space:pre-wrap;font-family:inherit;font-size:14px;background:#f8f9fa;padding:10px;border-radius:8px;max-height:40vh;overflow:auto}
 </style>
 </head>
 <body>
 
 <div id="loginView" class="box">
   <h1>🧸 كاشير محل الألعاب</h1>
-  <label for="email">اسم المستخدم أو البريد</label>
+  <label for="email">اسم المستخدم أو رقم الموبايل</label>
   <input id="email" type="text" class="ltr" autocomplete="username" autocapitalize="none" autocorrect="off">
   <label for="pass">كلمة السر</label>
   <input id="pass" type="password" class="ltr" autocomplete="current-password">
   <button id="loginBtn" class="full">دخول</button>
+  <button class="inst amber full">📲 تثبيت التطبيق على الموبايل</button>
   <div id="err" class="msg"></div>
 </div>
 
@@ -82,6 +84,7 @@ nav button.act{color:#ffe600}
   <div class="top">
     <span id="net"></span>
     <span id="who"></span>
+    <button class="inst amber sm">📲 تثبيت</button>
     <button id="logoutBtn" class="red sm">خروج</button>
   </div>
 
@@ -198,14 +201,15 @@ nav button.act{color:#ffe600}
       <h1>👥 إضافة موظف</h1>
       <label>اسم الموظف (عربي)</label>
       <input id="eName">
-      <label>اسم الدخول (إنجليزي من غير مسافات)</label>
-      <input id="eUser" class="ltr" autocapitalize="none" autocorrect="off" placeholder="ahmed">
+      <label>اسم الدخول: رقم الموبايل أو اسم إنجليزي</label>
+      <input id="eUser" class="ltr" inputmode="text" autocapitalize="none" autocorrect="off" placeholder="01012345678">
       <label>كلمة سر الموظف (6 على الأقل)</label>
       <input id="ePw" type="text" class="ltr" autocapitalize="none">
       <button id="empBtn" class="full">إضافة الموظف ➕</button>
-      <p class="note">إنشاء الحساب محتاج نت. الموظف يدخل باسم الدخول وكلمة السر دي من رابط التطبيق.</p>
+      <p class="note">إنشاء الحساب محتاج نت. بعد الإضافة هتظهر رسالة جاهزة تبعتها للموظف على واتساب فيها الرابط واسم الدخول وكلمة السر.</p>
     </div>
     <div class="box">
+      <button id="linkBtn" class="green full" style="margin-top:0">🔗 مشاركة رابط التطبيق</button>
       <h2>الموظفين</h2>
       <div id="empList"></div>
     </div>
@@ -277,6 +281,17 @@ nav button.act{color:#ffe600}
     <button id="rcClose" class="gray full">إغلاق</button>
   </div>
 </div>
+
+<div id="shModal" class="modal">
+  <div class="box">
+    <h2 style="margin-top:0">✅ تمت إضافة الموظف</h2>
+    <p class="note" style="margin:0 0 8px">ابعت له الرسالة دي (كلمة السر مش بتتحفظ في التطبيق، فانسخها أو ابعتها دلوقتي):</p>
+    <pre id="shText"></pre>
+    <button id="shWa" class="green full">📤 إرسال على واتساب</button>
+    <button id="shCopy" class="amber full">📋 نسخ الرسالة</button>
+    <button id="shClose" class="gray full">إغلاق</button>
+  </div>
+</div>
 <div id="toast"></div>
 
 <script type="module">
@@ -296,6 +311,7 @@ const CFG = {
 const ADMIN_EMAIL = 'admin@cashier.com';
 const DOMAIN = '@cashier.com';
 const SHOP = 'محل الألعاب';
+const APP_URL = location.origin + location.pathname.replace(/index\.html$/, '');
 
 const app = initializeApp(CFG);
 const auth = getAuth(app);
@@ -310,7 +326,7 @@ const num = n => Math.round((Number(n) || 0) * 100) / 100;
 const fmt = ts => new Date(ts).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' });
 let products = {}, sales = [], expenses = [], employees = [], cart = [], imgData = '', unsubs = [], per = 'day';
 let adminHash = null, pinStatus = 'loading', unlocked = false, pending = null, isAdmin = false;
-let scanStream = null, scanTimer = null, scanTarget = 'cart', lastCode = '', lastAt = 0, lastSale = null;
+let scanStream = null, scanTimer = null, scanTarget = 'cart', lastCode = '', lastAt = 0, lastSale = null, shareMsg = '', sharePhone = '';
 
 function toast(t) {
   const el = $('toast'); el.textContent = t; el.style.display = 'block';
@@ -335,6 +351,20 @@ function nameOf(email) {
   return e ? e.name : String(email || '').split('@')[0];
 }
 
+/* ---------- تثبيت التطبيق ---------- */
+let deferred = null;
+const instBtns = () => document.querySelectorAll('.inst');
+addEventListener('beforeinstallprompt', e => {
+  e.preventDefault(); deferred = e;
+  instBtns().forEach(b => b.style.display = 'block');
+});
+addEventListener('appinstalled', () => { deferred = null; instBtns().forEach(b => b.style.display = 'none'); toast('تم تثبيت التطبيق ✅'); });
+instBtns().forEach(b => b.onclick = async () => {
+  if (!deferred) return;
+  deferred.prompt(); await deferred.userChoice; deferred = null;
+  instBtns().forEach(x => x.style.display = 'none');
+});
+
 /* ---------- الدخول ---------- */
 const errors = {
   'auth/invalid-credential': 'اسم الدخول أو كلمة السر غلط',
@@ -342,9 +372,11 @@ const errors = {
   'auth/too-many-requests': 'محاولات كتير، استنى شوية',
   'auth/network-request-failed': 'مفيش نت. أول دخول لازم يكون بالنت'
 };
+// يحوّل الأرقام العربية (٠١٢) لإنجليزي عشان رقم الموبايل يتكتب بأي كيبورد
+const latin = s => s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 $('loginBtn').onclick = async () => {
   $('err').style.display = 'none';
-  let u = $('email').value.trim().toLowerCase();
+  let u = latin($('email').value.trim().toLowerCase());
   if (u && !u.includes('@')) u += DOMAIN;
   try { await signInWithEmailAndPassword(auth, u, $('pass').value); }
   catch (e) { $('err').textContent = errors[e.code] || ('خطأ: ' + e.code); $('err').style.display = 'block'; }
@@ -410,7 +442,6 @@ function tab(name) {
     $(s).style.display = k === name ? 'block' : 'none';
     $(b).className = k === name ? 'act' : '';
   });
-  if (name !== 'stock') { /* لو الكاميرا شغالة لمسح باركود المنتج نقفلها */ }
   scrollTo(0, 0);
 }
 Object.entries(TABS).forEach(([k, [, b]]) => $(b).onclick = () => tab(k));
@@ -598,7 +629,7 @@ function receiptText(s) {
   L.push('--------------', 'الإجمالي: ' + num(s.total) + ' ج.م', 'شكرًا لزيارتكم 🌸');
   return L.join('\n');
 }
-const openWa = s => window.open('https://wa.me/?text=' + encodeURIComponent(receiptText(s)), '_blank');
+const openWa = (s, phone) => window.open('https://wa.me/' + (phone || '') + '?text=' + encodeURIComponent(receiptText(s)), '_blank');
 
 $('checkoutBtn').onclick = () => {
   if (!cart.length) return toast('السلة فاضية');
@@ -705,9 +736,9 @@ $('expList').onclick = e => {
 
 /* ---------- الموظفين ---------- */
 $('empBtn').onclick = async () => {
-  const name = $('eName').value.trim(), user = $('eUser').value.trim().toLowerCase(), pw = $('ePw').value;
+  const name = $('eName').value.trim(), user = latin($('eUser').value.trim().toLowerCase()), pw = latin($('ePw').value);
   if (!name) return toast('اكتب اسم الموظف');
-  if (!/^[a-z0-9._-]{3,}$/.test(user)) return toast('اسم الدخول إنجليزي 3 حروف على الأقل من غير مسافات');
+  if (!/^[a-z0-9._-]{3,}$/.test(user)) return toast('اسم الدخول: رقم موبايل أو إنجليزي 3 حروف على الأقل من غير مسافات');
   if (pw.length < 6) return toast('كلمة السر 6 على الأقل');
   if (!navigator.onLine) return toast('إنشاء الحساب محتاج نت');
   const email = user + DOMAIN;
@@ -717,11 +748,23 @@ $('empBtn').onclick = async () => {
     setDoc(doc(db, 'employees', cred.user.uid), { name, email, active: true, createdAt: Date.now() })
       .catch(e => toast('تعذر حفظ الموظف: ' + e.code));
     ['eName', 'eUser', 'ePw'].forEach(id => $(id).value = '');
-    toast('تمت إضافة ' + name + ' ✅');
+    // رسالة جاهزة للموظف
+    shareMsg = `مرحبًا ${name} 👋\nتطبيق الكاشير لـ ${SHOP}\n\nالرابط: ${APP_URL}\nاسم الدخول: ${user}\nكلمة السر: ${pw}\n\nافتح الرابط في كروم، ادخل، وبعدين اضغط "تثبيت التطبيق".`;
+    sharePhone = /^01\d{9}$/.test(user) ? '20' + user.slice(1) : '';
+    $('shText').textContent = shareMsg; $('shModal').style.display = 'flex';
   } catch (e) {
     toast(e.code === 'auth/email-already-in-use' ? 'اسم الدخول ده موجود، اختار غيره'
       : e.code === 'auth/weak-password' ? 'كلمة السر ضعيفة' : 'خطأ: ' + e.code);
   }
+};
+$('shWa').onclick = () => window.open('https://wa.me/' + sharePhone + '?text=' + encodeURIComponent(shareMsg), '_blank');
+$('shCopy').onclick = () => navigator.clipboard.writeText(shareMsg).then(() => toast('تم النسخ ✅')).catch(() => toast('تعذر النسخ'));
+$('shClose').onclick = () => { $('shModal').style.display = 'none'; shareMsg = ''; $('shText').textContent = ''; };
+
+$('linkBtn').onclick = () => {
+  const text = `تطبيق الكاشير لـ ${SHOP}\n${APP_URL}`;
+  if (navigator.share) navigator.share({ title: 'كاشير ' + SHOP, text, url: APP_URL }).catch(() => {});
+  else window.open('https://wa.me/?text=' + encodeURIComponent(text), '_blank');
 };
 function renderEmp() {
   $('empList').innerHTML = employees.length ? employees.map(e =>
@@ -847,7 +890,6 @@ $('invSearch').oninput = renderInv;
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
-        </html>
+  </html>
 
 
-    
