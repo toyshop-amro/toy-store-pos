@@ -41,8 +41,9 @@ button{border:0;border-radius:8px;font-size:15px;font-weight:bold;color:#fff;bac
 .qty button{padding:2px 9px;font-size:16px}
 .pr-in{width:70px;padding:6px;font-size:14px;text-align:center;border:1px solid #1a73e8}
 .total{display:flex;justify-content:space-between;font-size:18px;font-weight:bold;margin-top:12px;color:#137333}
-nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#1a73e8;padding:8px 0;z-index:10}
-nav button{flex:1;background:none;border-radius:0;font-size:12px;padding:8px 2px}
+nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#1a73e8;padding:6px 0;z-index:10}
+nav button{flex:1;background:none;border-radius:0;font-size:11px;padding:4px 1px;line-height:1.4}
+nav button span{display:block;font-size:18px}
 nav button.act{color:#ffe600}
 #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#202124;color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;display:none;z-index:60;text-align:center}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -50,10 +51,10 @@ nav button.act{color:#ffe600}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
 .seg button{background:#e4e6eb;color:#333}
 .seg button.sel{background:#1a73e8;color:#fff}
-.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:6px}
+.cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .cd{background:#f8f9fa;border:1px solid #dadce0;border-radius:10px;padding:10px;text-align:center;font-size:12px;color:#5f6368}
 .cd b{display:block;font-size:17px;color:#137333;margin-top:4px}
-.cd b.bl{color:#1a73e8}
+.cd b.bl{color:#1a73e8}.cd b.rd{color:#c5221f}
 .mut{text-align:center;color:#777;padding:8px;font-size:13px}
 .modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);align-items:center;justify-content:center;z-index:50;padding:20px}
 .modal .box{width:100%;max-width:320px;margin:0}
@@ -110,6 +111,22 @@ nav button.act{color:#ffe600}
     </div>
   </div>
 
+  <div id="expTab" style="display:none">
+    <div class="box">
+      <h1>💸 تسجيل مصروف</h1>
+      <label>البند (إيجار، كهرباء، أكياس...)</label>
+      <input id="eTitle">
+      <label>المبلغ (ج.م)</label>
+      <input id="eAmt" type="number" inputmode="decimal">
+      <button id="expBtn" class="red full">تسجيل المصروف 📝</button>
+    </div>
+    <div class="box">
+      <div class="cards"><div class="cd" style="grid-column:1/-1">مصروفات النهارده<b class="rd" id="eToday">0 ج.م</b></div></div>
+      <h2>آخر المصروفات</h2>
+      <div id="expList"></div>
+    </div>
+  </div>
+
   <div id="repTab" style="display:none">
     <div class="box">
       <h1>📊 تقرير المبيعات</h1>
@@ -121,9 +138,9 @@ nav button.act{color:#ffe600}
       <div class="cards">
         <div class="cd">عدد الفواتير<b class="bl" id="rCount">0</b></div>
         <div class="cd">إجمالي المبيعات<b id="rSales">0 ج.م</b></div>
-      </div>
-      <div class="cards">
-        <div class="cd" style="grid-column:1/-1">ربح المبيعات<b id="rProfit">0 ج.م</b></div>
+        <div class="cd">ربح المبيعات<b class="bl" id="rProfit">0 ج.م</b></div>
+        <div class="cd">المصروفات<b class="rd" id="rExp">0 ج.م</b></div>
+        <div class="cd" style="grid-column:1/-1">صافي الربح (بعد المصروفات)<b id="rNet">0 ج.م</b></div>
       </div>
       <h2>الأكثر مبيعًا</h2>
       <div id="topList"></div>
@@ -159,10 +176,11 @@ nav button.act{color:#ffe600}
   </div>
 
   <nav>
-    <button id="tabPos" class="act">🛒 الكاشير</button>
-    <button id="tabStock">📦 المنتجات</button>
-    <button id="tabRep">📊 التقارير</button>
-    <button id="tabSet">⚙️ الإعدادات</button>
+    <button id="tabPos" class="act"><span>🛒</span>الكاشير</button>
+    <button id="tabStock"><span>📦</span>المنتجات</button>
+    <button id="tabExp"><span>💸</span>المصاريف</button>
+    <button id="tabRep"><span>📊</span>التقارير</button>
+    <button id="tabSet"><span>⚙️</span>الإعدادات</button>
   </nav>
 </div>
 
@@ -200,7 +218,8 @@ const db = initializeFirestore(app, {
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const num = n => Math.round((Number(n) || 0) * 100) / 100;
-let products = {}, sales = [], cart = [], imgData = '', unsubs = [], per = 'day';
+const fmt = ts => new Date(ts).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' });
+let products = {}, sales = [], expenses = [], cart = [], imgData = '', unsubs = [], per = 'day';
 let adminHash = null, pinStatus = 'loading', unlocked = false, pending = null;
 
 function toast(t) {
@@ -219,6 +238,7 @@ async function sha(s) {
   const b = await crypto.subtle.digest('SHA-256', new TextEncoder().encode('toypos:' + s));
   return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
 }
+function startOfDay() { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime(); }
 
 /* ---------- الدخول ---------- */
 const errors = {
@@ -252,15 +272,23 @@ onAuthStateChanged(auth, user => {
       snap.forEach(d => sales.push(d.data()));
       renderReports();
     }, e => toast('خطأ في التحميل: ' + e.code)));
+    unsubs.push(onSnapshot(collection(db, 'expenses'), snap => {
+      expenses = [];
+      snap.forEach(d => expenses.push({ id: d.id, ...d.data() }));
+      renderExp(); renderReports();
+    }, e => toast('خطأ في التحميل: ' + e.code)));
     unsubs.push(onSnapshot(doc(db, 'settings', 'admin'), snap => {
       if (snap.exists()) { adminHash = snap.data().pin; pinStatus = 'set'; }
       else if (!snap.metadata.fromCache) { adminHash = null; pinStatus = 'none'; }
     }, e => toast('خطأ: ' + e.code)));
-  } else { products = {}; sales = []; cart = []; }
+  } else { products = {}; sales = []; expenses = []; cart = []; }
 });
 
 /* ---------- التبويبات + القفل ---------- */
-const TABS = { pos: ['posTab', 'tabPos'], stock: ['stockTab', 'tabStock'], rep: ['repTab', 'tabRep'], set: ['setTab', 'tabSet'] };
+const TABS = {
+  pos: ['posTab', 'tabPos'], stock: ['stockTab', 'tabStock'], exp: ['expTab', 'tabExp'],
+  rep: ['repTab', 'tabRep'], set: ['setTab', 'tabSet']
+};
 function tab(name) {
   if (name !== 'pos' && !unlocked) { openPin(name); return; }
   if (name === 'pos') unlocked = false; // الرجوع للكاشير بيقفل تاني
@@ -436,6 +464,30 @@ $('stockList').onclick = e => {
   }
 };
 
+/* ---------- المصاريف ---------- */
+$('expBtn').onclick = () => {
+  const title = $('eTitle').value.trim(), amount = parseFloat($('eAmt').value) || 0;
+  if (!title || amount <= 0) return toast('اكتب البند والمبلغ');
+  setDoc(doc(collection(db, 'expenses')), { title, amount, user: auth.currentUser.email, ts: Date.now() })
+    .catch(e => toast('تعذر الحفظ: ' + e.code));
+  $('eTitle').value = ''; $('eAmt').value = '';
+  toast('تم تسجيل المصروف ✅');
+};
+function renderExp() {
+  const list = [...expenses].sort((a, b) => b.ts - a.ts);
+  const sod = startOfDay();
+  $('eToday').textContent = num(list.filter(e => e.ts >= sod).reduce((a, e) => a + e.amount, 0)) + ' ج.م';
+  $('expList').innerHTML = list.length ? list.slice(0, 50).map(e =>
+    `<div class="row" data-id="${e.id}"><div class="info">${esc(e.title)}<small>${fmt(e.ts)}</small></div>
+      <b style="color:#c5221f">${num(e.amount)} ج.م</b><button class="red sm" data-act="del">حذف</button></div>`).join('')
+    : '<p class="mut">لا توجد مصروفات</p>';
+}
+$('expList').onclick = e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const id = b.closest('[data-id]').dataset.id;
+  if (confirm('حذف المصروف ده؟')) deleteDoc(doc(db, 'expenses', id)).catch(e => toast('تعذر الحذف: ' + e.code));
+};
+
 /* ---------- التقارير ---------- */
 function setPer(p) {
   per = p;
@@ -451,7 +503,7 @@ $('pMonth').onclick = () => setPer('month');
 function renderReports() {
   const now = new Date();
   let from;
-  if (per === 'day') from = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  if (per === 'day') from = startOfDay();
   else if (per === 'week') from = Date.now() - 7 * 864e5;
   else from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
 
@@ -464,9 +516,13 @@ function renderReports() {
       t.q += i.qty; t.v += i.price * i.qty;
     });
   });
+  const exp = expenses.filter(e => e.ts >= from).reduce((a, e) => a + e.amount, 0);
   $('rCount').textContent = list.length;
   $('rSales').textContent = num(tot) + ' ج.م';
   $('rProfit').textContent = num(pro) + ' ج.م';
+  $('rExp').textContent = num(exp) + ' ج.م';
+  $('rNet').textContent = num(pro - exp) + ' ج.م';
+  $('rNet').className = pro - exp < 0 ? 'rd' : '';
 
   const tops = Object.entries(top).sort((a, b) => b[1].q - a[1].q).slice(0, 5);
   $('topList').innerHTML = tops.length ? tops.map(([n, t]) =>
@@ -474,9 +530,8 @@ function renderReports() {
     : '<p class="mut">لا توجد مبيعات في الفترة دي</p>';
 
   $('salesList').innerHTML = list.length ? list.slice(0, 50).map(s => {
-    const d = new Date(s.ts).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' });
     const cnt = (s.items || []).reduce((a, i) => a + i.qty, 0);
-    return `<div class="row"><div class="info">${d}<small>${cnt} قطعة | ${esc((s.user || '').split('@')[0])}</small></div>
+    return `<div class="row"><div class="info">${fmt(s.ts)}<small>${cnt} قطعة | ${esc((s.user || '').split('@')[0])}</small></div>
       <div style="text-align:left"><b style="color:#137333">${num(s.total)} ج.م</b><small style="display:block;color:#1a73e8">ربح ${num(s.profit)}</small></div></div>`;
   }).join('') : '<p class="mut">لا توجد فواتير</p>';
 
@@ -496,5 +551,7 @@ function renderReports() {
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
-  </html>
+                                                                    </html>
 
+
+                                                                
