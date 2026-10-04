@@ -42,8 +42,8 @@ button{border:0;border-radius:8px;font-size:15px;font-weight:bold;color:#fff;bac
 .pr-in{width:70px;padding:6px;font-size:14px;text-align:center;border:1px solid #1a73e8}
 .total{display:flex;justify-content:space-between;font-size:18px;font-weight:bold;margin-top:12px;color:#137333}
 nav{position:fixed;bottom:0;left:0;right:0;display:flex;background:#1a73e8;padding:6px 0;z-index:10}
-nav button{flex:1;background:none;border-radius:0;font-size:11px;padding:4px 1px;line-height:1.4}
-nav button span{display:block;font-size:18px}
+nav button{flex:1;background:none;border-radius:0;font-size:10px;padding:4px 0;line-height:1.4}
+nav button span{display:block;font-size:17px}
 nav button.act{color:#ffe600}
 #toast{position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#202124;color:#fff;padding:10px 18px;border-radius:20px;font-size:14px;display:none;z-index:60;text-align:center}
 .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
@@ -56,6 +56,7 @@ nav button.act{color:#ffe600}
 .cd b{display:block;font-size:17px;color:#137333;margin-top:4px}
 .cd b.bl{color:#1a73e8}.cd b.rd{color:#c5221f}
 .mut{text-align:center;color:#777;padding:8px;font-size:13px}
+.note{font-size:12px;color:#5f6368;margin-top:8px;line-height:1.6}
 .modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);align-items:center;justify-content:center;z-index:50;padding:20px}
 .modal .box{width:100%;max-width:320px;margin:0}
 </style>
@@ -64,8 +65,8 @@ nav button.act{color:#ffe600}
 
 <div id="loginView" class="box">
   <h1>🧸 كاشير محل الألعاب</h1>
-  <label for="email">البريد الإلكتروني</label>
-  <input id="email" type="email" class="ltr" autocomplete="username">
+  <label for="email">اسم المستخدم أو البريد</label>
+  <input id="email" type="text" class="ltr" autocomplete="username" autocapitalize="none" autocorrect="off">
   <label for="pass">كلمة السر</label>
   <input id="pass" type="password" class="ltr" autocomplete="current-password">
   <button id="loginBtn" class="full">دخول</button>
@@ -75,7 +76,7 @@ nav button.act{color:#ffe600}
 <div id="appView">
   <div class="top">
     <span id="net"></span>
-    <span id="who" class="ltr"></span>
+    <span id="who"></span>
     <button id="logoutBtn" class="red sm">خروج</button>
   </div>
 
@@ -142,6 +143,8 @@ nav button.act{color:#ffe600}
         <div class="cd">المصروفات<b class="rd" id="rExp">0 ج.م</b></div>
         <div class="cd" style="grid-column:1/-1">صافي الربح (بعد المصروفات)<b id="rNet">0 ج.م</b></div>
       </div>
+      <h2>مبيعات كل موظف</h2>
+      <div id="empRep"></div>
       <h2>الأكثر مبيعًا</h2>
       <div id="topList"></div>
       <h2>الفواتير</h2>
@@ -160,6 +163,24 @@ nav button.act{color:#ffe600}
     </div>
   </div>
 
+  <div id="empTab" style="display:none">
+    <div class="box">
+      <h1>👥 إضافة موظف</h1>
+      <label>اسم الموظف (عربي)</label>
+      <input id="eName">
+      <label>اسم الدخول (إنجليزي من غير مسافات)</label>
+      <input id="eUser" class="ltr" autocapitalize="none" autocorrect="off" placeholder="ahmed">
+      <label>كلمة سر الموظف (6 على الأقل)</label>
+      <input id="ePw" type="text" class="ltr" autocapitalize="none">
+      <button id="empBtn" class="full">إضافة الموظف ➕</button>
+      <p class="note">إنشاء الحساب محتاج نت. الموظف يدخل باسم الدخول وكلمة السر دي من رابط التطبيق.</p>
+    </div>
+    <div class="box">
+      <h2>الموظفين</h2>
+      <div id="empList"></div>
+    </div>
+  </div>
+
   <div id="setTab" style="display:none">
     <div class="box">
       <h1>⚙️ الإعدادات</h1>
@@ -175,11 +196,12 @@ nav button.act{color:#ffe600}
     </div>
   </div>
 
-  <nav>
+  <nav id="nav">
     <button id="tabPos" class="act"><span>🛒</span>الكاشير</button>
     <button id="tabStock"><span>📦</span>المنتجات</button>
     <button id="tabExp"><span>💸</span>المصاريف</button>
     <button id="tabRep"><span>📊</span>التقارير</button>
+    <button id="tabEmp"><span>👥</span>الموظفين</button>
     <button id="tabSet"><span>⚙️</span>الإعدادات</button>
   </nav>
 </div>
@@ -198,10 +220,10 @@ nav button.act{color:#ffe600}
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import { getAuth, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, onSnapshot, setDoc, deleteDoc, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
-const app = initializeApp({
+const CFG = {
   apiKey: "AIzaSyDQ5vyabx8OEW9BYFou7P50VU0rf3FGANU",
   authDomain: "toyshop-pos.firebaseapp.com",
   databaseURL: "https://toyshop-pos-default-rtdb.firebaseio.com",
@@ -209,22 +231,28 @@ const app = initializeApp({
   storageBucket: "toyshop-pos.firebasestorage.app",
   messagingSenderId: "389217581078",
   appId: "1:389217581078:web:7ba820c6f9995b721fdd37"
-});
+};
+const ADMIN_EMAIL = 'admin@cashier.com';
+const DOMAIN = '@cashier.com';
+
+const app = initializeApp(CFG);
 const auth = getAuth(app);
 const db = initializeFirestore(app, {
   localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() })
 });
+// تطبيق تاني بس لإنشاء حسابات الموظفين من غير ما المدير يخرج
+const auth2 = getAuth(initializeApp(CFG, 'second'));
 
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const num = n => Math.round((Number(n) || 0) * 100) / 100;
 const fmt = ts => new Date(ts).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' });
-let products = {}, sales = [], expenses = [], cart = [], imgData = '', unsubs = [], per = 'day';
-let adminHash = null, pinStatus = 'loading', unlocked = false, pending = null;
+let products = {}, sales = [], expenses = [], employees = [], cart = [], imgData = '', unsubs = [], per = 'day';
+let adminHash = null, pinStatus = 'loading', unlocked = false, pending = null, isAdmin = false;
 
 function toast(t) {
   const el = $('toast'); el.textContent = t; el.style.display = 'block';
-  clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = 'none', 2500);
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = 'none', 2800);
 }
 function showNet() {
   const on = navigator.onLine;
@@ -239,17 +267,24 @@ async function sha(s) {
   return [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, '0')).join('');
 }
 function startOfDay() { const n = new Date(); return new Date(n.getFullYear(), n.getMonth(), n.getDate()).getTime(); }
+function nameOf(email) {
+  if (email === ADMIN_EMAIL) return 'المدير';
+  const e = employees.find(x => x.email === email);
+  return e ? e.name : String(email || '').split('@')[0];
+}
 
 /* ---------- الدخول ---------- */
 const errors = {
-  'auth/invalid-credential': 'البريد أو كلمة السر غلط',
-  'auth/invalid-email': 'اكتب البريد بشكل صحيح',
+  'auth/invalid-credential': 'اسم الدخول أو كلمة السر غلط',
+  'auth/invalid-email': 'اكتب اسم الدخول بشكل صحيح',
   'auth/too-many-requests': 'محاولات كتير، استنى شوية',
   'auth/network-request-failed': 'مفيش نت. أول دخول لازم يكون بالنت'
 };
 $('loginBtn').onclick = async () => {
   $('err').style.display = 'none';
-  try { await signInWithEmailAndPassword(auth, $('email').value.trim(), $('pass').value); }
+  let u = $('email').value.trim().toLowerCase();
+  if (u && !u.includes('@')) u += DOMAIN;
+  try { await signInWithEmailAndPassword(auth, u, $('pass').value); }
   catch (e) { $('err').textContent = errors[e.code] || ('خطأ: ' + e.code); $('err').style.display = 'block'; }
 };
 $('logoutBtn').onclick = () => signOut(auth);
@@ -259,37 +294,53 @@ onAuthStateChanged(auth, user => {
   $('appView').style.display = user ? 'block' : 'none';
   unsubs.forEach(f => f()); unsubs = [];
   unlocked = false; adminHash = null; pinStatus = 'loading';
-  if (user) {
-    $('who').textContent = user.email;
-    tab('pos');
-    unsubs.push(onSnapshot(collection(db, 'products'), snap => {
-      products = {};
-      snap.forEach(d => products[d.id] = d.data());
-      renderGrid(); renderStock(); renderCart(); renderReports();
-    }, e => toast('خطأ في التحميل: ' + e.code)));
+  isAdmin = !!user && user.email === ADMIN_EMAIL;
+  if (!user) { products = {}; sales = []; expenses = []; employees = []; cart = []; return; }
+
+  $('who').textContent = isAdmin ? '👤 المدير' : '👤 ' + user.email.split('@')[0];
+  $('nav').style.display = isAdmin ? 'flex' : 'none';
+  tab('pos');
+  const onErr = e => {
+    if (e.code === 'permission-denied' && !isAdmin) { toast('حسابك موقوف أو غير مسجل'); signOut(auth); }
+    else toast('خطأ في التحميل: ' + e.code);
+  };
+  unsubs.push(onSnapshot(collection(db, 'products'), snap => {
+    products = {};
+    snap.forEach(d => products[d.id] = d.data());
+    renderGrid(); renderStock(); renderCart(); renderReports();
+  }, onErr));
+
+  if (isAdmin) {
     unsubs.push(onSnapshot(collection(db, 'sales'), snap => {
-      sales = [];
-      snap.forEach(d => sales.push(d.data()));
-      renderReports();
-    }, e => toast('خطأ في التحميل: ' + e.code)));
+      sales = []; snap.forEach(d => sales.push(d.data())); renderReports();
+    }, onErr));
     unsubs.push(onSnapshot(collection(db, 'expenses'), snap => {
-      expenses = [];
-      snap.forEach(d => expenses.push({ id: d.id, ...d.data() }));
-      renderExp(); renderReports();
-    }, e => toast('خطأ في التحميل: ' + e.code)));
+      expenses = []; snap.forEach(d => expenses.push({ id: d.id, ...d.data() })); renderExp(); renderReports();
+    }, onErr));
+    unsubs.push(onSnapshot(collection(db, 'employees'), snap => {
+      employees = []; snap.forEach(d => employees.push({ id: d.id, ...d.data() })); renderEmp(); renderReports();
+    }, onErr));
     unsubs.push(onSnapshot(doc(db, 'settings', 'admin'), snap => {
       if (snap.exists()) { adminHash = snap.data().pin; pinStatus = 'set'; }
       else if (!snap.metadata.fromCache) { adminHash = null; pinStatus = 'none'; }
-    }, e => toast('خطأ: ' + e.code)));
-  } else { products = {}; sales = []; expenses = []; cart = []; }
+    }, onErr));
+  } else {
+    unsubs.push(onSnapshot(doc(db, 'employees', user.uid), snap => {
+      if (snap.exists()) {
+        $('who').textContent = '👤 ' + snap.data().name;
+        if (snap.data().active === false) { toast('حسابك موقوف'); signOut(auth); }
+      }
+    }, onErr));
+  }
 });
 
 /* ---------- التبويبات + القفل ---------- */
 const TABS = {
   pos: ['posTab', 'tabPos'], stock: ['stockTab', 'tabStock'], exp: ['expTab', 'tabExp'],
-  rep: ['repTab', 'tabRep'], set: ['setTab', 'tabSet']
+  rep: ['repTab', 'tabRep'], emp: ['empTab', 'tabEmp'], set: ['setTab', 'tabSet']
 };
 function tab(name) {
+  if (name !== 'pos' && !isAdmin) return;
   if (name !== 'pos' && !unlocked) { openPin(name); return; }
   if (name === 'pos') unlocked = false; // الرجوع للكاشير بيقفل تاني
   Object.entries(TABS).forEach(([k, [s, b]]) => {
@@ -488,6 +539,39 @@ $('expList').onclick = e => {
   if (confirm('حذف المصروف ده؟')) deleteDoc(doc(db, 'expenses', id)).catch(e => toast('تعذر الحذف: ' + e.code));
 };
 
+/* ---------- الموظفين ---------- */
+$('empBtn').onclick = async () => {
+  const name = $('eName').value.trim(), user = $('eUser').value.trim().toLowerCase(), pw = $('ePw').value;
+  if (!name) return toast('اكتب اسم الموظف');
+  if (!/^[a-z0-9._-]{3,}$/.test(user)) return toast('اسم الدخول إنجليزي 3 حروف على الأقل من غير مسافات');
+  if (pw.length < 6) return toast('كلمة السر 6 على الأقل');
+  if (!navigator.onLine) return toast('إنشاء الحساب محتاج نت');
+  const email = user + DOMAIN;
+  try {
+    const cred = await createUserWithEmailAndPassword(auth2, email, pw);
+    await signOut(auth2);
+    setDoc(doc(db, 'employees', cred.user.uid), { name, email, active: true, createdAt: Date.now() })
+      .catch(e => toast('تعذر حفظ الموظف: ' + e.code));
+    ['eName', 'eUser', 'ePw'].forEach(id => $(id).value = '');
+    toast('تمت إضافة ' + name + ' ✅');
+  } catch (e) {
+    toast(e.code === 'auth/email-already-in-use' ? 'اسم الدخول ده موجود، اختار غيره'
+      : e.code === 'auth/weak-password' ? 'كلمة السر ضعيفة' : 'خطأ: ' + e.code);
+  }
+};
+function renderEmp() {
+  $('empList').innerHTML = employees.length ? employees.map(e =>
+    `<div class="row" data-id="${e.id}"><div class="info">${esc(e.name)}
+      <small>${esc((e.email || '').split('@')[0])} — ${e.active ? '✅ شغال' : '⛔ موقوف'}</small></div>
+      <button class="${e.active ? 'red' : 'green'} sm" data-act="tog">${e.active ? 'إيقاف' : 'تفعيل'}</button></div>`).join('')
+    : '<p class="mut">لا يوجد موظفين بعد</p>';
+}
+$('empList').onclick = e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const id = b.closest('[data-id]').dataset.id, emp = employees.find(x => x.id === id);
+  updateDoc(doc(db, 'employees', id), { active: !emp.active }).catch(e => toast('تعذر التعديل: ' + e.code));
+};
+
 /* ---------- التقارير ---------- */
 function setPer(p) {
   per = p;
@@ -501,6 +585,7 @@ $('pWeek').onclick = () => setPer('week');
 $('pMonth').onclick = () => setPer('month');
 
 function renderReports() {
+  if (!isAdmin) return;
   const now = new Date();
   let from;
   if (per === 'day') from = startOfDay();
@@ -508,12 +593,13 @@ function renderReports() {
   else from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
 
   const list = sales.filter(s => s.ts >= from).sort((a, b) => b.ts - a.ts);
-  let tot = 0, pro = 0; const top = {};
+  let tot = 0, pro = 0; const top = {}, by = {};
   list.forEach(s => {
     tot += s.total || 0; pro += s.profit || 0;
+    const k = s.user || '?'; const t = by[k] || (by[k] = { n: 0, v: 0 }); t.n++; t.v += s.total || 0;
     (s.items || []).forEach(i => {
-      const t = top[i.name] || (top[i.name] = { q: 0, v: 0 });
-      t.q += i.qty; t.v += i.price * i.qty;
+      const t2 = top[i.name] || (top[i.name] = { q: 0, v: 0 });
+      t2.q += i.qty; t2.v += i.price * i.qty;
     });
   });
   const exp = expenses.filter(e => e.ts >= from).reduce((a, e) => a + e.amount, 0);
@@ -524,6 +610,11 @@ function renderReports() {
   $('rNet').textContent = num(pro - exp) + ' ج.م';
   $('rNet').className = pro - exp < 0 ? 'rd' : '';
 
+  const emps = Object.entries(by).sort((a, b) => b[1].v - a[1].v);
+  $('empRep').innerHTML = emps.length ? emps.map(([u, t]) =>
+    `<div class="row"><div class="info">${esc(nameOf(u))}<small>${t.n} فاتورة</small></div><b style="color:#137333">${num(t.v)} ج.م</b></div>`).join('')
+    : '<p class="mut">لا توجد مبيعات في الفترة دي</p>';
+
   const tops = Object.entries(top).sort((a, b) => b[1].q - a[1].q).slice(0, 5);
   $('topList').innerHTML = tops.length ? tops.map(([n, t]) =>
     `<div class="row"><div class="info">${esc(n)}<small>${t.q} قطعة | ${num(t.v)} ج.م</small></div></div>`).join('')
@@ -531,7 +622,7 @@ function renderReports() {
 
   $('salesList').innerHTML = list.length ? list.slice(0, 50).map(s => {
     const cnt = (s.items || []).reduce((a, i) => a + i.qty, 0);
-    return `<div class="row"><div class="info">${fmt(s.ts)}<small>${cnt} قطعة | ${esc((s.user || '').split('@')[0])}</small></div>
+    return `<div class="row"><div class="info">${fmt(s.ts)}<small>${cnt} قطعة | ${esc(nameOf(s.user))}</small></div>
       <div style="text-align:left"><b style="color:#137333">${num(s.total)} ج.م</b><small style="display:block;color:#1a73e8">ربح ${num(s.profit)}</small></div></div>`;
   }).join('') : '<p class="mut">لا توجد فواتير</p>';
 
@@ -551,7 +642,5 @@ function renderReports() {
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
-                                                                    </html>
+  </html>
 
-
-                                                                
