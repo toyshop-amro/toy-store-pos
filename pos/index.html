@@ -41,6 +41,7 @@ button{border:0;border-radius:8px;font-size:15px;font-weight:bold;color:#fff;bac
 .row .info small{display:block;color:#777;font-weight:normal}
 .row.ret .info,.row.ret b{text-decoration:line-through;opacity:.6}
 .tag{background:#fce8e6;color:#c5221f;border-radius:6px;padding:1px 6px;font-size:11px}
+.rk{width:24px;height:24px;border-radius:50%;background:#1a73e8;color:#fff;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:bold;flex-shrink:0}
 .qty{display:flex;align-items:center;gap:4px}
 .qty button{padding:2px 9px;font-size:16px}
 .pr-in{width:70px;padding:6px;font-size:14px;text-align:center;border:1px solid #1a73e8}
@@ -54,12 +55,15 @@ nav button.act{color:#ffe600}
 #prev{width:70px;height:70px;object-fit:cover;border-radius:8px;display:none;margin:8px auto 0}
 .seg{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px}
 .seg.s2{grid-template-columns:1fr 1fr}
+.seg.s4{grid-template-columns:repeat(4,1fr)}
+.seg.s4 button{font-size:12px;padding:10px 2px}
 .seg button{background:#e4e6eb;color:#333}
 .seg button.sel{background:#1a73e8;color:#fff}
 .cards{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px}
 .cd{background:#f8f9fa;border:1px solid #dadce0;border-radius:10px;padding:10px;text-align:center;font-size:12px;color:#5f6368}
 .cd b{display:block;font-size:17px;color:#137333;margin-top:4px}
 .cd b.bl{color:#1a73e8}.cd b.rd{color:#c5221f}
+.cd small{display:block;margin-top:3px;font-size:11px;color:#777}
 .mut{text-align:center;color:#777;padding:8px;font-size:13px}
 .note{font-size:12px;color:#5f6368;margin-top:8px;line-height:1.6}
 .modal{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);align-items:center;justify-content:center;z-index:50;padding:20px}
@@ -146,12 +150,41 @@ nav button.act{color:#ffe600}
 
   <!-- التقارير -->
   <div id="repTab" style="display:none">
-    <div class="seg s2">
-      <button id="vSales" class="sel">📈 المبيعات</button>
+    <div class="seg">
+      <button id="vOv" class="sel">🏠 نظرة عامة</button>
+      <button id="vSales">📈 المبيعات</button>
       <button id="vInv">📦 المخزن</button>
     </div>
 
-    <div id="repSales">
+    <!-- نظرة عامة -->
+    <div id="repOv">
+      <div class="box">
+        <h1>🏠 نظرة عامة</h1>
+        <div class="seg s4">
+          <button id="oSales" class="sel">المبيعات</button>
+          <button id="oProfit">الأرباح</button>
+          <button id="oTopQ">الأكثر مبيعًا</button>
+          <button id="oTopP">الأكثر ربحًا</button>
+        </div>
+        <div id="ovCards" class="cards">
+          <div class="cd">اليوم<b id="ovT">0</b><small id="ovTn"></small></div>
+          <div class="cd">أمس<b id="ovY">0</b><small id="ovYn"></small></div>
+          <div class="cd">هذا الشهر<b id="ovM">0</b><small id="ovMn"></small></div>
+          <div class="cd">الشهر السابق<b id="ovP">0</b><small id="ovPn"></small></div>
+        </div>
+        <div id="ovProds" style="display:none">
+          <div class="seg">
+            <button id="opDay" class="sel">اليوم</button>
+            <button id="opWeek">آخر 7 أيام</button>
+            <button id="opMonth">الشهر</button>
+          </div>
+          <div id="ovList"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- تقرير المبيعات -->
+    <div id="repSales" style="display:none">
       <div class="box">
         <h1>📈 تقرير المبيعات</h1>
         <div class="seg">
@@ -175,6 +208,7 @@ nav button.act{color:#ffe600}
       </div>
     </div>
 
+    <!-- تقرير المخزن -->
     <div id="repInv" style="display:none">
       <div class="box">
         <h1>📦 تقرير المخزن</h1>
@@ -324,9 +358,12 @@ const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 const num = n => Math.round((Number(n) || 0) * 100) / 100;
 const fmt = ts => new Date(ts).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' });
+// يحوّل الأرقام العربية (٠١٢) لإنجليزي عشان رقم الموبايل يتكتب بأي كيبورد
+const latin = s => s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 let products = {}, sales = [], expenses = [], employees = [], cart = [], imgData = '', unsubs = [], per = 'day';
 let adminHash = null, pinStatus = 'loading', unlocked = false, pending = null, isAdmin = false;
 let scanStream = null, scanTimer = null, scanTarget = 'cart', lastCode = '', lastAt = 0, lastSale = null, shareMsg = '', sharePhone = '';
+let ovMode = 'sales', ovPer = 'day';
 
 function toast(t) {
   const el = $('toast'); el.textContent = t; el.style.display = 'block';
@@ -372,8 +409,6 @@ const errors = {
   'auth/too-many-requests': 'محاولات كتير، استنى شوية',
   'auth/network-request-failed': 'مفيش نت. أول دخول لازم يكون بالنت'
 };
-// يحوّل الأرقام العربية (٠١٢) لإنجليزي عشان رقم الموبايل يتكتب بأي كيبورد
-const latin = s => s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 $('loginBtn').onclick = async () => {
   $('err').style.display = 'none';
   let u = latin($('email').value.trim().toLowerCase());
@@ -781,13 +816,61 @@ $('empList').onclick = e => {
 
 /* ---------- التقارير ---------- */
 function setView(v) {
-  $('repSales').style.display = v === 'sales' ? 'block' : 'none';
-  $('repInv').style.display = v === 'inv' ? 'block' : 'none';
-  $('vSales').className = v === 'sales' ? 'sel' : '';
-  $('vInv').className = v === 'inv' ? 'sel' : '';
+  const P = { ov: 'repOv', sales: 'repSales', inv: 'repInv' }, B = { ov: 'vOv', sales: 'vSales', inv: 'vInv' };
+  Object.keys(P).forEach(k => { $(P[k]).style.display = k === v ? 'block' : 'none'; $(B[k]).className = k === v ? 'sel' : ''; });
 }
+$('vOv').onclick = () => { setView('ov'); renderOverview(); };
 $('vSales').onclick = () => setView('sales');
 $('vInv').onclick = () => { setView('inv'); renderInv(); };
+
+/* نظرة عامة */
+const OV = { sales: 'oSales', profit: 'oProfit', topq: 'oTopQ', topp: 'oTopP' };
+Object.entries(OV).forEach(([k, id]) => $(id).onclick = () => {
+  ovMode = k; Object.entries(OV).forEach(([k2, id2]) => $(id2).className = k2 === k ? 'sel' : ''); renderOverview();
+});
+const OP = { day: 'opDay', week: 'opWeek', month: 'opMonth' };
+Object.entries(OP).forEach(([k, id]) => $(id).onclick = () => {
+  ovPer = k; Object.entries(OP).forEach(([k2, id2]) => $(id2).className = k2 === k ? 'sel' : ''); renderOverview();
+});
+function range(from, to) {
+  let n = 0, t = 0, p = 0;
+  sales.forEach(s => { if (s.returned || s.ts < from || s.ts >= to) return; n++; t += s.total || 0; p += s.profit || 0; });
+  const e = expenses.filter(x => x.ts >= from && x.ts < to).reduce((a, x) => a + x.amount, 0);
+  return { n, t, p, e };
+}
+function renderOverview() {
+  if (!isAdmin) return;
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
+  const sod = new Date(y, m, d).getTime(), yod = new Date(y, m, d - 1).getTime();
+  const som = new Date(y, m, 1).getTime(), spm = new Date(y, m - 1, 1).getTime(), end = Date.now() + 1;
+  const prod = ovMode === 'topq' || ovMode === 'topp';
+  $('ovCards').style.display = prod ? 'none' : '';
+  $('ovProds').style.display = prod ? 'block' : 'none';
+
+  if (!prod) {
+    const set = (k, r) => {
+      $('ov' + k).textContent = num(ovMode === 'sales' ? r.t : r.p) + ' ج.م';
+      $('ov' + k + 'n').textContent = ovMode === 'sales' ? r.n + ' فاتورة' : 'صافي بعد المصروفات: ' + num(r.p - r.e) + ' ج.م';
+    };
+    set('T', range(sod, end)); set('Y', range(yod, sod)); set('M', range(som, end)); set('P', range(spm, som));
+    return;
+  }
+  const from = ovPer === 'day' ? sod : ovPer === 'week' ? Date.now() - 7 * 864e5 : som;
+  const agg = {};
+  sales.forEach(s => {
+    if (s.returned || s.ts < from) return;
+    (s.items || []).forEach(i => {
+      const a = agg[i.name] || (agg[i.name] = { q: 0, v: 0, p: 0 });
+      a.q += i.qty; a.v += i.price * i.qty; a.p += (i.price - (i.cost || 0)) * i.qty;
+    });
+  });
+  const key = ovMode === 'topq' ? 'q' : 'p';
+  const list = Object.entries(agg).sort((a, b) => b[1][key] - a[1][key]).slice(0, 10);
+  $('ovList').innerHTML = list.length ? list.map(([n, a], i) =>
+    `<div class="row"><span class="rk">${i + 1}</span><div class="info">${esc(n)}<small>${a.q} قطعة | مبيعات ${num(a.v)} ج.م | ربح ${num(a.p)} ج.م</small></div>
+      <b style="color:${key === 'q' ? '#1a73e8' : '#137333'}">${key === 'q' ? a.q + ' قطعة' : num(a.p) + ' ج.م'}</b></div>`).join('')
+    : '<p class="mut">لا توجد مبيعات في الفترة دي</p>';
+}
 
 function setPer(p) {
   per = p;
@@ -802,6 +885,7 @@ $('pMonth').onclick = () => setPer('month');
 
 function renderReports() {
   if (!isAdmin) return;
+  renderOverview();
   const now = new Date();
   let from;
   if (per === 'day') from = startOfDay();
@@ -890,6 +974,6 @@ $('invSearch').oninput = renderInv;
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
-  </html>
+    </html>
 
-
+  
