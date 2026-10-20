@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>فحص</title>
+<style>body{font-family:sans-serif;padding:14px;line-height:1.9}b.ok{color:#137333}b.no{color:#c5221f}pre{white-space:pre-wrap;direction:ltr;background:#f4f5f7;padding:8px;border-radius:8px;font-size:12px}</style></head>
+<body><h2>🔍 فحص التطبيق</h2><div id="out"></div>
+<script type="module">
+const out = document.getElementById('out');
+const log = (t, ok) => out.insertAdjacentHTML('beforeend', `<div>${ok === undefined ? '' : ok ? '<b class="ok">✔</b> ' : '<b class="no">✘</b> '}${t}</div>`);
+window.onerror = m => log('خطأ: ' + m, false);
+window.onunhandledrejection = e => log('خطأ: ' + ((e.reason && e.reason.message) || e.reason), false);
+log('المتصفح: <pre>' + navigator.userAgent + '</pre>');
+try { localStorage.setItem('t', '1'); localStorage.removeItem('t'); log('localStorage', true); } catch (e) { log('localStorage: ' + e.message, false); }
+log('IndexedDB', !!window.indexedDB);
+log('Service Worker', 'serviceWorker' in navigator);
+log('crypto.subtle', !!(window.crypto && crypto.subtle));
+log('النت: ' + (navigator.onLine ? 'متصل' : 'مقطوع'));
+try {
+  const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
+  const { getAuth, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js');
+  const { getFirestore, doc, getDoc, collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
+  log('تحميل Firebase', true);
+  const app = initializeApp({
+    apiKey: "AIzaSyDQ5vyabx8OEW9BYFou7P50VU0rf3FGANU",
+    authDomain: "toyshop-pos.firebaseapp.com",
+    projectId: "toyshop-pos",
+    appId: "1:389217581078:web:7ba820c6f9995b721fdd37"
+  });
+  const auth = getAuth(app), db = getFirestore(app);
+  onAuthStateChanged(auth, async u => {
+    if (!u) { log('مفيش مستخدم داخل على الموبايل ده', false); return; }
+    log('داخل بحساب: ' + u.email, true);
+    if (u.email !== 'admin@cashier.com') {
+      try {
+        const d = await getDoc(doc(db, 'employees', u.uid));
+        log('مستند الموظف: ' + (d.exists() ? 'موجود | active=' + d.data().active : 'مش موجود'), d.exists() && d.data().active === true);
+      } catch (e) { log('قراءة مستند الموظف: ' + e.code, false); }
+    }
+    try { const s = await getDocs(collection(db, 'products')); log('قراءة المنتجات: ' + s.size + ' منتج', true); }
+    catch (e) { log('قراءة المنتجات: ' + e.code, false); }
+  });
+} catch (e) { log('Firebase: ' + e.message, false); }
+</script></body></html>
+
