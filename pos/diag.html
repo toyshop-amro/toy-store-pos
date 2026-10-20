@@ -1,43 +1,56 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1"><title>فحص</title>
-<style>body{font-family:sans-serif;padding:14px;line-height:1.9}b.ok{color:#137333}b.no{color:#c5221f}pre{white-space:pre-wrap;direction:ltr;background:#f4f5f7;padding:8px;border-radius:8px;font-size:12px}</style></head>
-<body><h2>🔍 فحص التطبيق</h2><div id="out"></div>
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>فحص الدخول</title>
+<style>
+body{font-family:sans-serif;padding:14px;line-height:1.9}
+input{width:100%;padding:11px;font-size:16px;margin:4px 0;border:1px solid #ccc;border-radius:8px;direction:ltr}
+button{width:100%;padding:12px;font-size:16px;border:0;border-radius:8px;background:#1a73e8;color:#fff;margin-top:6px}
+b.ok{color:#137333}b.no{color:#c5221f}
+</style></head>
+<body><h2>🔍 فحص الدخول</h2>
+<input id="u" placeholder="اسم الدخول أو رقم الموبايل" autocapitalize="none">
+<input id="p" type="password" placeholder="كلمة السر">
+<button id="go">فحص الدخول</button>
+<div id="out"></div>
 <script type="module">
 const out = document.getElementById('out');
 const log = (t, ok) => out.insertAdjacentHTML('beforeend', `<div>${ok === undefined ? '' : ok ? '<b class="ok">✔</b> ' : '<b class="no">✘</b> '}${t}</div>`);
 window.onerror = m => log('خطأ: ' + m, false);
-window.onunhandledrejection = e => log('خطأ: ' + ((e.reason && e.reason.message) || e.reason), false);
-log('المتصفح: <pre>' + navigator.userAgent + '</pre>');
-try { localStorage.setItem('t', '1'); localStorage.removeItem('t'); log('localStorage', true); } catch (e) { log('localStorage: ' + e.message, false); }
-log('IndexedDB', !!window.indexedDB);
-log('Service Worker', 'serviceWorker' in navigator);
-log('crypto.subtle', !!(window.crypto && crypto.subtle));
-log('النت: ' + (navigator.onLine ? 'متصل' : 'مقطوع'));
+let A, F, auth, db;
 try {
   const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js');
-  const { getAuth, onAuthStateChanged } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js');
-  const { getFirestore, doc, getDoc, collection, getDocs } = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
-  log('تحميل Firebase', true);
+  A = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js');
+  F = await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js');
   const app = initializeApp({
     apiKey: "AIzaSyDQ5vyabx8OEW9BYFou7P50VU0rf3FGANU",
     authDomain: "toyshop-pos.firebaseapp.com",
     projectId: "toyshop-pos",
     appId: "1:389217581078:web:7ba820c6f9995b721fdd37"
   });
-  const auth = getAuth(app), db = getFirestore(app);
-  onAuthStateChanged(auth, async u => {
-    if (!u) { log('مفيش مستخدم داخل على الموبايل ده', false); return; }
-    log('داخل بحساب: ' + u.email, true);
-    if (u.email !== 'admin@cashier.com') {
+  auth = A.getAuth(app); db = F.getFirestore(app);
+} catch (e) { log('تحميل Firebase: ' + e.message, false); }
+
+document.getElementById('go').onclick = async () => {
+  out.innerHTML = '';
+  let u = document.getElementById('u').value.trim().toLowerCase().replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
+  if (u && !u.includes('@')) u += '@cashier.com';
+  try {
+    const c = await A.signInWithEmailAndPassword(auth, u, document.getElementById('p').value);
+    log('تسجيل الدخول نجح: ' + c.user.email, true);
+    const admin = c.user.email === 'admin@cashier.com';
+    log('نوع الحساب: ' + (admin ? 'مدير' : 'موظف'));
+    if (!admin) {
       try {
-        const d = await getDoc(doc(db, 'employees', u.uid));
-        log('مستند الموظف: ' + (d.exists() ? 'موجود | active=' + d.data().active : 'مش موجود'), d.exists() && d.data().active === true);
+        const d = await F.getDoc(F.doc(db, 'employees', c.user.uid));
+        log('مستند الموظف: ' + (d.exists() ? 'موجود، active=' + d.data().active : 'مش موجود'), d.exists() && d.data().active === true);
       } catch (e) { log('قراءة مستند الموظف: ' + e.code, false); }
     }
-    try { const s = await getDocs(collection(db, 'products')); log('قراءة المنتجات: ' + s.size + ' منتج', true); }
-    catch (e) { log('قراءة المنتجات: ' + e.code, false); }
-  });
-} catch (e) { log('Firebase: ' + e.message, false); }
+    try {
+      const s = await F.getDocs(F.collection(db, 'products'));
+      log('قراءة المنتجات: ' + s.size + ' منتج', true);
+    } catch (e) { log('قراءة المنتجات: ' + e.code, false); }
+    log('دلوقتي ارجع للتطبيق وجرّب تفتحه.');
+  } catch (e) { log('تسجيل الدخول فشل: ' + e.code, false); }
+};
 </script></body></html>
 
