@@ -123,6 +123,8 @@ nav button.act{color:#ffe600}
     <button class="inst amber sm">📲 تثبيت</button>
     <button id="logoutBtn" class="red sm">خروج</button>
   </div>
+  <button id="failBtn" class="red full" style="display:none;margin:0 0 10px"></button>
+  <div id="bkBar" class="msg" style="margin:0 0 10px;background:#fff8e1;color:#8a6d00"></div>
 
   <!-- الكاشير -->
   <div id="posTab" class="box">
@@ -257,12 +259,14 @@ nav button.act{color:#ffe600}
           <div class="cd">أمس<b id="ovY">0</b><small id="ovYn"></small></div>
           <div class="cd">هذا الشهر<b id="ovM">0</b><small id="ovMn"></small></div>
           <div class="cd">الشهر السابق<b id="ovP">0</b><small id="ovPn"></small></div>
+          <div class="cd" style="grid-column:1/-1">هذه السنة<b id="ovS">0</b><small id="ovSn"></small></div>
         </div>
         <div id="ovProds" style="display:none">
-          <div class="seg">
+          <div class="seg s4">
             <button id="opDay" class="sel">اليوم</button>
-            <button id="opWeek">آخر 7 أيام</button>
+            <button id="opWeek">7 أيام</button>
             <button id="opMonth">الشهر</button>
+            <button id="opYear">السنة</button>
           </div>
           <div id="ovList"></div>
         </div>
@@ -276,6 +280,12 @@ nav button.act{color:#ffe600}
           <button id="pDay" class="sel">اليوم</button>
           <button id="pWeek">آخر 7 أيام</button>
           <button id="pMonth">الشهر</button>
+          <button id="pYear">السنة</button>
+          <button id="pRange">📅 فترة</button>
+        </div>
+        <div id="rangeBox" class="two" style="display:none;margin-bottom:10px">
+          <div><label>من</label><input type="date" id="rFrom"></div>
+          <div><label>إلى</label><input type="date" id="rTo"></div>
         </div>
         <div class="cards">
           <div class="cd">عدد الفواتير<b class="bl" id="rCount">0</b></div>
@@ -284,6 +294,8 @@ nav button.act{color:#ffe600}
           <div class="cd">المصروفات<b class="rd" id="rExp">0 ج.م</b></div>
           <div class="cd" style="grid-column:1/-1">صافي الربح (بعد المصروفات)<b id="rNet">0 ج.م</b></div>
         </div>
+        <h2 id="brkTitle">📅 مبيعات كل يوم</h2>
+        <div id="brkList"></div>
         <h2>مبيعات كل موظف</h2>
         <div id="empRep"></div>
         <h2>الأكثر مبيعًا</h2>
@@ -358,7 +370,7 @@ nav button.act{color:#ffe600}
       <button id="xSales" class="green full">تصدير المبيعات (Excel)</button>
       <button id="xExp" class="green full">تصدير المصاريف (Excel)</button>
       <button id="xAll" class="full">نسخة احتياطية كاملة (ملف)</button>
-      <p class="note">ملفات Excel بتنزل في مجلد التنزيلات وتفتح بالإكسل.</p>
+      <p class="note">ملفات Excel بتنزل في مجلد التنزيلات وتفتح بالإكسل. خد نسخة احتياطية كل أسبوع.</p>
     </div>
     <div class="box">
       <h2>📥 نقل بيانات التطبيق القديم</h2>
@@ -467,7 +479,7 @@ nav button.act{color:#ffe600}
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
 import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, writeBatch, increment } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, doc, onSnapshot, setDoc, updateDoc, deleteDoc, writeBatch, increment, getDocFromServer, waitForPendingWrites } from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
 
 const CFG = {
   apiKey: "AIzaSyDQ5vyabx8OEW9BYFou7P50VU0rf3FGANU",
@@ -508,7 +520,7 @@ const priceOf = p => (saleMode === 'w' && p.wprice > 0) ? p.wprice : p.price;
 
 function toast(t) {
   const el = $('toast'); el.textContent = t; el.style.display = 'block';
-  clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = 'none', 2800);
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.style.display = 'none', 3200);
 }
 function showNet() {
   const on = navigator.onLine;
@@ -534,6 +546,70 @@ function bigImg(e) {
   $('bigImg').src = im.src; $('imgModal').style.display = 'flex'; return true;
 }
 $('imgModal').onclick = () => $('imgModal').style.display = 'none';
+
+/* ---------- صندوق الحماية: مفيش فاتورة تضيع ---------- */
+const ob = {
+  get() { try { return JSON.parse(localStorage.getItem('outbox') || '[]'); } catch (e) { return []; } },
+  set(a) { try { localStorage.setItem('outbox', JSON.stringify(a)); } catch (e) {} },
+  add(s) { const a = this.get().filter(x => x.sid !== s.sid); a.push(s); this.set(a); },
+  del(sid) { this.set(this.get().filter(x => x.sid !== sid)); },
+  flag(sid, f) { this.set(this.get().map(x => x.sid === sid ? { ...x, failed: f } : x)); }
+};
+function renderFailed() {
+  const n = ob.get().filter(x => x.failed).length;
+  $('failBtn').style.display = n ? 'block' : 'none';
+  $('failBtn').textContent = '⚠️ فيه ' + n + ' فاتورة ما اتحفظتش على السيرفر — اضغط لإعادة الإرسال';
+}
+// حفظ فاتورة بيع أو مرتجع: بتتحفظ على الموبايل الأول وبعدين تتبعت
+function saveSale(sale, silent) {
+  if (!sale.sid) sale.sid = 's' + sale.ts + Math.random().toString(36).slice(2, 7);
+  sale.failed = false;
+  ob.add(sale);
+  const { sid, failed, ...data } = sale;
+  const b = writeBatch(db);
+  b.set(doc(db, 'sales', sid), data);
+  (sale.items || []).forEach(it => { if (products[it.id]) b.update(doc(db, 'products', it.id), { stock: increment(-it.qty) }); });
+  b.commit()
+    .then(() => { ob.del(sid); renderFailed(); })
+    .catch(e => {
+      ob.flag(sid, true); renderFailed();
+      if (!silent) alert('⚠️ الفاتورة رقم ' + sale.no + ' ما اتحفظتش على السيرفر (' + e.code + ').\nمتقلقش، هي محفوظة على الموبايل.\nكلّم المدير، وبعدين اضغط زرار "إعادة الإرسال" الأحمر اللي فوق في الكاشير.');
+    });
+}
+$('failBtn').onclick = () => {
+  const f = ob.get().filter(x => x.failed);
+  if (!f.length) return;
+  f.forEach(s => { s.user = auth.currentUser.email; s.seller = myName; saveSale(s, true); });
+  toast('بنعيد إرسال ' + f.length + ' فاتورة...');
+};
+let verifying = false;
+async function verifyOutbox() {
+  if (verifying || !auth.currentUser || !ob.get().length) return;
+  verifying = true;
+  try {
+    await waitForPendingWrites(db);
+    for (const s of ob.get()) {
+      if (s.failed) continue;
+      try {
+        const d = await getDocFromServer(doc(db, 'sales', s.sid));
+        if (d.exists()) ob.del(s.sid); else ob.flag(s.sid, true);
+      } catch (e) { if (e.code === 'permission-denied') ob.flag(s.sid, true); }
+    }
+  } catch (e) {}
+  verifying = false; renderFailed();
+}
+addEventListener('online', verifyOutbox);
+
+/* ---------- تذكير النسخة الاحتياطية ---------- */
+function checkBackup() {
+  const el = $('bkBar');
+  if (!isAdmin) { el.style.display = 'none'; return; }
+  const t = +localStorage.getItem('lastBackup') || 0, days = (Date.now() - t) / 864e5;
+  if (!t || days > 7) {
+    el.textContent = t ? '💾 عدّى ' + Math.floor(days) + ' يوم من آخر نسخة احتياطية. خدها من ⚙️ الإعدادات' : '💾 لسه ما خدتش نسخة احتياطية. خدها من ⚙️ الإعدادات';
+    el.style.display = 'block';
+  } else el.style.display = 'none';
+}
 
 /* ---------- تثبيت التطبيق ---------- */
 let deferred = null;
@@ -581,8 +657,9 @@ onAuthStateChanged(auth, user => {
   $('rtInv').style.display = isAdmin ? '' : 'none';
   setMode('r');
   tab('pos');
+  renderFailed(); checkBackup(); verifyOutbox();
   const onErr = e => {
-    if (e.code === 'permission-denied' && !isAdmin) { toast('حسابك موقوف أو غير مسجل'); signOut(auth); }
+    if (e.code === 'permission-denied' && !isAdmin) { toast('حسابك موقوف أو غير مسجل. كلّم المدير (فواتيرك محفوظة)'); signOut(auth); }
     else toast('خطأ في التحميل: ' + e.code);
   };
   unsubs.push(onSnapshot(collection(db, 'products'), snap => {
@@ -620,7 +697,7 @@ onAuthStateChanged(auth, user => {
     unsubs.push(onSnapshot(doc(db, 'employees', user.uid), snap => {
       if (snap.exists()) {
         myName = snap.data().name; $('who').textContent = '👤 ' + myName;
-        if (snap.data().active === false) { toast('حسابك موقوف'); signOut(auth); }
+        if (snap.data().active === false) { toast('حسابك موقوف. كلّم المدير (فواتيرك محفوظة)'); signOut(auth); }
       }
     }, onErr));
   }
@@ -702,6 +779,8 @@ const today = () => new Date().toISOString().slice(0, 10);
 function backupAll() {
   download('نسخة-احتياطية-' + today() + '.json',
     JSON.stringify({ date: new Date().toISOString(), shop, products, sales, expenses, employees, suppliers, purchases }), 'application/json');
+  try { localStorage.setItem('lastBackup', Date.now()); } catch (e) {}
+  checkBackup();
 }
 $('xProd').onclick = () => {
   download('المنتجات-' + today() + '.csv', csv([['الاسم', 'الباركود', 'سعر الشراء', 'سعر القطاعي', 'سعر الجملة', 'الكمية'],
@@ -986,10 +1065,7 @@ function checkout(withReceipt) {
   const ts = Date.now();
   const sale = { no: invNo(ts), items, total: num(total), profit: num(profit), paid: num(paid), due: num(due),
     mode: saleMode, cust, seller: myName, user: auth.currentUser.email, ts };
-  const batch = writeBatch(db);
-  batch.set(doc(collection(db, 'sales')), sale);
-  items.forEach(it => { if (products[it.id]) batch.update(doc(db, 'products', it.id), { stock: increment(-it.qty) }); });
-  batch.commit().catch(e => toast('تعذر حفظ الفاتورة: ' + e.code)); // من غير await عشان يشتغل أوفلاين
+  saveSale(sale);
   cart = []; ['paid', 'cName', 'cPhone', 'cAddr'].forEach(id => $(id).value = ''); $('custBox').open = false;
   setMode('r'); // بعد كل بيع نرجع قطاعي
   if (withReceipt) showReceipt(sale, '✅ تم البيع');
@@ -1062,10 +1138,7 @@ $('rtOk').onclick = () => {
   const ts = Date.now();
   const sale = { type: 'return', ref: rtRef, no: invNo(ts), items, total: -num(total), profit: -num(profit),
     paid: -num(total), due: 0, cust: {}, seller: myName, user: auth.currentUser.email, ts };
-  const batch = writeBatch(db);
-  batch.set(doc(collection(db, 'sales')), sale);
-  rt.forEach(r => { if (products[r.id]) batch.update(doc(db, 'products', r.id), { stock: increment(r.qty) }); });
-  batch.commit().catch(e => toast('تعذر حفظ المرتجع: ' + e.code));
+  saveSale(sale);
   rt = []; rtRef = ''; $('rtModal').style.display = 'none';
   showReceipt(sale, '↩️ تم المرتجع');
 };
@@ -1343,6 +1416,7 @@ function renderEmp() {
 $('empList').onclick = e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const id = b.closest('[data-id]').dataset.id, emp = employees.find(x => x.id === id);
+  if (emp.active && !confirm('إيقاف ' + emp.name + '؟ مش هيقدر يدخل ولا يبيع لحد ما تفعّله تاني.')) return;
   updateDoc(doc(db, 'employees', id), { active: !emp.active }).catch(e => toast('تعذر التعديل: ' + e.code));
 };
 
@@ -1359,7 +1433,7 @@ const OV = { sales: 'oSales', profit: 'oProfit', topq: 'oTopQ', topp: 'oTopP' };
 Object.entries(OV).forEach(([k, id]) => $(id).onclick = () => {
   ovMode = k; Object.entries(OV).forEach(([k2, id2]) => $(id2).className = k2 === k ? 'sel' : ''); renderOverview();
 });
-const OP = { day: 'opDay', week: 'opWeek', month: 'opMonth' };
+const OP = { day: 'opDay', week: 'opWeek', month: 'opMonth', year: 'opYear' };
 Object.entries(OP).forEach(([k, id]) => $(id).onclick = () => {
   ovPer = k; Object.entries(OP).forEach(([k2, id2]) => $(id2).className = k2 === k ? 'sel' : ''); renderOverview();
 });
@@ -1377,7 +1451,7 @@ function renderOverview() {
   if (!isAdmin) return;
   const now = new Date(), y = now.getFullYear(), m = now.getMonth(), d = now.getDate();
   const sod = new Date(y, m, d).getTime(), yod = new Date(y, m, d - 1).getTime();
-  const som = new Date(y, m, 1).getTime(), spm = new Date(y, m - 1, 1).getTime(), end = Date.now() + 1;
+  const som = new Date(y, m, 1).getTime(), spm = new Date(y, m - 1, 1).getTime(), soy = new Date(y, 0, 1).getTime(), end = Date.now() + 1;
   const prod = ovMode === 'topq' || ovMode === 'topp';
   $('ovCards').style.display = prod ? 'none' : '';
   $('ovProds').style.display = prod ? 'block' : 'none';
@@ -1387,10 +1461,10 @@ function renderOverview() {
       $('ov' + k).textContent = num(ovMode === 'sales' ? r.t : r.p) + ' ج.م';
       $('ov' + k + 'n').textContent = ovMode === 'sales' ? r.n + ' فاتورة' : 'صافي بعد المصروفات: ' + num(r.p - r.e) + ' ج.م';
     };
-    set('T', range(sod, end)); set('Y', range(yod, sod)); set('M', range(som, end)); set('P', range(spm, som));
+    set('T', range(sod, end)); set('Y', range(yod, sod)); set('M', range(som, end)); set('P', range(spm, som)); set('S', range(soy, end));
     return;
   }
-  const from = ovPer === 'day' ? sod : ovPer === 'week' ? Date.now() - 7 * 864e5 : som;
+  const from = ovPer === 'day' ? sod : ovPer === 'week' ? Date.now() - 7 * 864e5 : ovPer === 'month' ? som : soy;
   const agg = {};
   sales.forEach(s => {
     if (s.returned || s.ts < from) return;
@@ -1407,29 +1481,31 @@ function renderOverview() {
     : '<p class="mut">لا توجد مبيعات في الفترة دي</p>';
 }
 
-function setPer(p) {
-  per = p;
-  $('pDay').className = p === 'day' ? 'sel' : '';
-  $('pWeek').className = p === 'week' ? 'sel' : '';
-  $('pMonth').className = p === 'month' ? 'sel' : '';
+const PM = { day: 'pDay', week: 'pWeek', month: 'pMonth', year: 'pYear', range: 'pRange' };
+Object.entries(PM).forEach(([k, id]) => $(id).onclick = () => {
+  per = k;
+  Object.entries(PM).forEach(([k2, id2]) => $(id2).className = k2 === k ? 'sel' : '');
+  $('rangeBox').style.display = k === 'range' ? 'grid' : 'none';
   renderReports();
+});
+$('rFrom').onchange = $('rTo').onchange = () => renderReports();
+function periodRange() {
+  const now = new Date(), y = now.getFullYear(), m = now.getMonth(), end = Date.now() + 1;
+  if (per === 'day') return [startOfDay(), end];
+  if (per === 'week') return [Date.now() - 7 * 864e5, end];
+  if (per === 'month') return [new Date(y, m, 1).getTime(), end];
+  if (per === 'year') return [new Date(y, 0, 1).getTime(), end];
+  const f = $('rFrom').value, t = $('rTo').value;
+  return [f ? new Date(f + 'T00:00:00').getTime() : 0, t ? new Date(t + 'T00:00:00').getTime() + 864e5 : end];
 }
-$('pDay').onclick = () => setPer('day');
-$('pWeek').onclick = () => setPer('week');
-$('pMonth').onclick = () => setPer('month');
 
 function renderReports() {
   if (!isAdmin) return;
   renderOverview();
-  const now = new Date();
-  let from;
-  if (per === 'day') from = startOfDay();
-  else if (per === 'week') from = Date.now() - 7 * 864e5;
-  else from = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-
-  const all = sales.filter(s => s.ts >= from).sort((a, b) => b.ts - a.ts);
+  const [from, to] = periodRange();
+  const all = sales.filter(s => s.ts >= from && s.ts < to).sort((a, b) => b.ts - a.ts);
   const list = all.filter(s => !s.returned);
-  let tot = 0, pro = 0, cnt = 0; const top = {}, by = {};
+  let tot = 0, pro = 0, cnt = 0; const top = {}, by = {}, grp = {};
   list.forEach(s => {
     tot += s.total || 0; pro += s.profit || 0;
     const isRet = s.type === 'return'; if (!isRet) cnt++;
@@ -1438,14 +1514,27 @@ function renderReports() {
       const t2 = top[i.name] || (top[i.name] = { q: 0, v: 0 });
       t2.q += i.qty; t2.v += i.price * i.qty;
     });
+    const dt = new Date(s.ts);
+    const gk = per === 'year' ? dt.getFullYear() * 100 + dt.getMonth() : new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()).getTime();
+    const g = grp[gk] || (grp[gk] = { ts: s.ts, n: 0, t: 0, p: 0 });
+    if (!isRet) g.n++; g.t += s.total || 0; g.p += s.profit || 0;
   });
-  const exp = expenses.filter(e => e.ts >= from).reduce((a, e) => a + e.amount, 0);
+  const exp = expenses.filter(e => e.ts >= from && e.ts < to).reduce((a, e) => a + e.amount, 0);
   $('rCount').textContent = cnt;
   $('rSales').textContent = num(tot) + ' ج.م';
   $('rProfit').textContent = num(pro) + ' ج.م';
   $('rExp').textContent = num(exp) + ' ج.م';
   $('rNet').textContent = num(pro - exp) + ' ج.م';
   $('rNet').className = pro - exp < 0 ? 'rd' : '';
+
+  $('brkTitle').textContent = per === 'year' ? '📅 مبيعات كل شهر' : '📅 مبيعات كل يوم';
+  const gk = Object.keys(grp).sort((a, b) => b - a);
+  $('brkList').innerHTML = gk.length ? gk.map(k => {
+    const g = grp[k];
+    const lab = per === 'year' ? new Date(g.ts).toLocaleDateString('ar-EG', { month: 'long', year: 'numeric' })
+      : new Date(g.ts).toLocaleDateString('ar-EG', { weekday: 'long', day: 'numeric', month: 'numeric' });
+    return `<div class="row"><div class="info">${lab}<small>${g.n} فاتورة | ربح ${num(g.p)} ج.م</small></div><b style="color:#137333">${num(g.t)} ج.م</b></div>`;
+  }).join('') : '<p class="mut">لا توجد مبيعات في الفترة دي</p>';
 
   const emps = Object.entries(by).sort((a, b) => b[1].v - a[1].v);
   $('empRep').innerHTML = emps.length ? emps.map(([u, t]) =>
@@ -1457,7 +1546,7 @@ function renderReports() {
     `<div class="row"><div class="info">${esc(n)}<small>${t.q} قطعة | ${num(t.v)} ج.م</small></div></div>`).join('')
     : '<p class="mut">لا توجد مبيعات في الفترة دي</p>';
 
-  $('salesList').innerHTML = all.length ? all.slice(0, 50).map(s => {
+  $('salesList').innerHTML = all.length ? all.slice(0, 100).map(s => {
     const q = (s.items || []).reduce((a, i) => a + Math.abs(i.qty), 0), c = s.cust || {};
     const isRet = s.type === 'return', neg = (s.total || 0) < 0;
     return `<div class="row ${s.returned ? 'ret' : ''}" data-id="${s.id}">
@@ -1506,7 +1595,6 @@ $('lowList').onclick = bigImg;
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
-            </html>
+  </html>
 
 
-        
