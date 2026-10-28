@@ -8,11 +8,16 @@
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon-192-5.png">
 <link rel="apple-touch-icon" href="icon-192-5.png">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js">
+<link rel="modulepreload" href="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js">
+<script>if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(function () {});</script>
 <style>
 *{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Tahoma,sans-serif}
 body{background:#f0f2f5;color:#333;padding:10px 10px 130px}
 .box{background:#fff;padding:16px;border-radius:14px;box-shadow:0 4px 15px rgba(0,0,0,.1);margin-bottom:12px}
-#loginView{max-width:380px;margin:12vh auto 0}
+#splash{text-align:center;margin-top:30vh;color:#1a73e8;font-weight:bold;font-size:20px}
+#loginView{max-width:380px;margin:12vh auto 0;display:none}
 h1{color:#1a73e8;text-align:center;font-size:21px;margin-bottom:12px}
 h2{color:#3c4043;font-size:16px;margin:14px 0 8px;border-bottom:1px solid #ddd;padding-bottom:4px}
 label{display:block;font-size:13px;font-weight:600;margin:10px 0 4px}
@@ -105,6 +110,8 @@ nav button.act{color:#ffe600}
 </head>
 <body>
 
+<div id="splash">🧸 جاري الفتح...</div>
+
 <div id="loginView" class="box">
   <h1>🧸 كاشير محل الألعاب</h1>
   <label for="email">اسم المستخدم أو رقم الموبايل</label>
@@ -166,12 +173,18 @@ nav button.act{color:#ffe600}
       <label>اسم اللعبة</label><input id="pName">
       <label>الباركود (اختياري)</label>
       <div class="srow"><input id="pBar" class="ltr" inputmode="numeric"><button id="pScan" class="amber">📷 مسح</button></div>
+      <label>سعر البيع</label><input id="pPrice" type="number" inputmode="decimal">
+      <h2>🧮 سعر الشراء والكمية (على دفعتين)</h2>
       <div class="two">
-        <div><label>سعر الشراء (متوسط)</label><input id="pCost" type="number" inputmode="decimal"></div>
-        <div><label>سعر البيع</label><input id="pPrice" type="number" inputmode="decimal"></div>
+        <div><label>الدفعة الأولى: السعر</label><input id="pP1" type="number" inputmode="decimal"></div>
+        <div><label>الدفعة الأولى: الكمية</label><input id="pQ1" type="number" inputmode="numeric"></div>
       </div>
-      <label>الكمية بالمخزن</label><input id="pStock" type="number" inputmode="numeric">
-      <p class="note">لو بتشتري نفس الصنف بأسعار مختلفة، سجّل كل مرة من 🚚 المشتريات، والتطبيق يحسب متوسط سعر الشراء لوحده، والربح يتحسب عليه. وتقدر تعدّله بإيدك هنا.</p>
+      <div class="two">
+        <div><label>الدفعة التانية: السعر</label><input id="pP2" type="number" inputmode="decimal"></div>
+        <div><label>الدفعة التانية: الكمية</label><input id="pQ2" type="number" inputmode="numeric"></div>
+      </div>
+      <div id="batchRes" class="note" style="font-weight:bold;color:#137333"></div>
+      <p class="note">لو اشتريت نفس الصنف بسعر تاني: سيب الدفعة الأولى بالكمية اللي عندك، واكتب سعر وكمية الدفعة التانية. التطبيق بيحسب الكمية الكلية ومتوسط سعر الشراء لوحده، والربح يتحسب على المتوسط.</p>
       <label>صورة اللعبة</label>
       <input id="pFile" type="file" accept="image/*">
       <img id="prev" alt="">
@@ -422,7 +435,8 @@ nav button.act{color:#ffe600}
   <div class="box">
     <h2 id="rcTitle" style="margin-top:0">✅ تم البيع</h2>
     <div id="rcPaper"></div>
-    <button id="rcWa" class="green full">📤 إرسال على واتساب</button>
+    <button id="rcWa" class="green full">📤 إرسال الفاتورة (صورة)</button>
+    <button id="rcTxt" class="gray full">📝 إرسال كنص على واتساب</button>
     <button id="rcPrint" class="amber full">🖨️ طباعة</button>
     <button id="rcClose" class="gray full">إغلاق</button>
   </div>
@@ -516,7 +530,6 @@ let ovMode = 'sales', ovPer = 'day';
 let shop = { name: 'محل الألعاب', addr: '', phone: '' }, myName = 'المدير', rt = [], rtRef = '', pur = [];
 let cols = +localStorage.getItem('gc') || 3;
 let gridLimit = 60, stockLimit = 40, invLimit = 60;
-const priceOf = p => p.price;
 
 /* ---------- رسم التبويب المفتوح بس (عشان التطبيق يخف) ---------- */
 const dirty = new Set();
@@ -657,6 +670,7 @@ $('loginBtn').onclick = async () => {
 $('logoutBtn').onclick = () => signOut(auth);
 
 onAuthStateChanged(auth, user => {
+  $('splash').style.display = 'none';
   $('loginView').style.display = user ? 'none' : 'block';
   $('appView').style.display = user ? 'block' : 'none';
   unsubs.forEach(f => f()); unsubs = [];
@@ -1089,7 +1103,110 @@ function showReceipt(s, title) {
   $('rcPaper').innerHTML = docHtml(s);
   $('rcModal').style.display = 'flex';
 }
-$('rcWa').onclick = () => lastSale && window.open('https://wa.me/' + waPhone(lastSale) + '?text=' + encodeURIComponent(docText(lastSale)), '_blank');
+
+/* ---------- الفاتورة كصورة (تتبعت على واتساب بنفس الشكل) ---------- */
+function docModel(s) {
+  const ab = Math.abs, c = s.cust || {};
+  const when = 'التاريخ: ' + fmtD(s.ts) + '   الوقت: ' + fmtT(s.ts);
+  if (s.type === 'purchase') return {
+    label: 'فاتورة شراء', color: '#1a73e8', no: s.no,
+    meta: ['رقم الفاتورة: ' + s.no, when, 'المورد: ' + s.supplierName],
+    head: ['الصنف', 'التكلفة', 'الكمية', 'القيمة'],
+    rows: s.items.map(i => [i.name, num(i.cost), i.qty, num(i.cost * i.qty)]),
+    sums: [['الإجمالي', num(s.total)], ['المدفوع', num(s.paid)], ...(s.due > 0 ? [['المتبقي', num(s.due)]] : []),
+      ['حساب سابق', num(s.prevBal)], ['حساب حالي', num(s.curBal), 1]],
+    foot: [shop.name]
+  };
+  if (s.type === 'payment') return {
+    label: 'دفعة لمورد', color: '#137333', no: s.no,
+    meta: ['رقم السند: ' + s.no, when, 'المورد: ' + s.supplierName],
+    head: null, rows: [],
+    sums: [['المبلغ المدفوع', num(s.amount)], ['حساب سابق', num(s.prevBal)], ['حساب حالي', num(s.curBal), 1]],
+    foot: [shop.name]
+  };
+  const ret = s.type === 'return';
+  const meta = ['رقم الفاتورة: ' + (s.no || ''), when, 'البائع: ' + (s.seller || nameOf(s.user))];
+  if (c.name) meta.push('العميل: ' + c.name);
+  if (c.phone) meta.push('التليفون: ' + c.phone);
+  if (c.addr) meta.push('العنوان: ' + c.addr);
+  return {
+    label: ret ? 'فاتورة مرتجع' : (s.mode === 'w' ? 'فاتورة جملة' : ''), color: ret ? '#c5221f' : '#1a73e8', no: s.no, meta,
+    head: ['الصنف', 'السعر', 'الكمية', 'القيمة'],
+    rows: (s.items || []).map(i => [i.name, num(i.price), ab(i.qty), num(i.price * ab(i.qty))]),
+    sums: ret ? [['الإجمالي', num(ab(s.total))]]
+      : [['الإجمالي', num(ab(s.total))], ['المدفوع', num(s.paid ?? s.total)], ...(s.due > 0 ? [['المتبقي', num(s.due)]] : [])],
+    foot: ['نشكركم على حسن زيارتكم', shop.addr, shop.phone].filter(Boolean)
+  };
+}
+function receiptCanvas(s) {
+  const m = docModel(s), W = 360, P = 16, SC = 2, H = 3000, R = W - P;
+  const big = document.createElement('canvas'); big.width = W * SC; big.height = H * SC;
+  const x = big.getContext('2d'); x.scale(SC, SC);
+  x.fillStyle = '#fff'; x.fillRect(0, 0, W, H);
+  x.direction = 'rtl'; x.textBaseline = 'top';
+  const FAM = '"Segoe UI", Tahoma, sans-serif';
+  let y = 14;
+  const font = (sz, b) => { x.font = (b ? 'bold ' : '') + sz + 'px ' + FAM; };
+  const txt = (t, ax, sz, b, col, al) => { font(sz, b); x.fillStyle = col || '#222'; x.textAlign = al || 'right'; x.fillText(String(t), ax, y); };
+  const dash = () => { x.save(); x.setLineDash([4, 3]); x.strokeStyle = '#999'; x.lineWidth = 1; x.beginPath(); x.moveTo(P, y + 3); x.lineTo(W - P, y + 3); x.stroke(); x.restore(); y += 11; };
+  const wrap = (t, maxW, sz) => {
+    font(sz, false); const out = []; let cur = '';
+    String(t).split(' ').forEach(w => { const n = cur ? cur + ' ' + w : w; if (cur && x.measureText(n).width > maxW) { out.push(cur); cur = w; } else cur = n; });
+    if (cur) out.push(cur); return out;
+  };
+  txt(shop.name, W / 2, 20, true, '#222', 'center'); y += 32; dash();
+  if (m.label) { txt(m.label, W / 2, 16, true, m.color, 'center'); y += 26; }
+  m.meta.forEach(t => { txt(t, R, 14, false); y += 22; });
+  dash();
+  if (m.head) {
+    const CX = [0, R - 170, R - 225, 55];
+    txt(m.head[0], R, 13, true); [1, 2, 3].forEach(k => txt(m.head[k], CX[k], 13, true, '#222', 'center')); y += 22; dash();
+    m.rows.forEach(r => {
+      const y0 = y;
+      wrap(r[0], 136, 13).forEach(l => { txt(l, R, 13, false); y += 18; });
+      const yEnd = y; y = y0;
+      [1, 2, 3].forEach(k => txt(r[k], CX[k], 13, false, '#222', 'center'));
+      y = yEnd + 3;
+    });
+    dash();
+  }
+  m.sums.forEach(([l, v, b], i) => { txt(l + ': ' + v + ' ج.م', R, 15, i === 0 || b); y += 25; });
+  dash();
+  m.foot.forEach(t => { txt(t, W / 2, 13, false, '#222', 'center'); y += 20; });
+  if (m.no) {
+    let units = 0; const segs = [];
+    for (const ch of '*' + m.no + '*') {
+      const p = C39[ch]; if (!p) continue;
+      for (let i = 0; i < 9; i++) { const w = p[i] === '1' ? 3 : 1; if (i % 2 === 0) segs.push([units, w]); units += w; }
+      units += 1;
+    }
+    const bw = 300, u = bw / units, ox = (W - bw) / 2;
+    y += 6; x.fillStyle = '#000'; segs.forEach(([a, w]) => x.fillRect(ox + a * u, y, w * u, 44)); y += 56;
+  }
+  const out = document.createElement('canvas');
+  out.width = W * SC; out.height = Math.ceil((y + 8) * SC);
+  out.getContext('2d').drawImage(big, 0, 0, W * SC, out.height, 0, 0, W * SC, out.height);
+  return out;
+}
+async function shareReceipt(s) {
+  try {
+    const cv = receiptCanvas(s);
+    const blob = await new Promise(r => cv.toBlob(r, 'image/png'));
+    const file = new File([blob], 'invoice-' + (s.no || Date.now()) + '.png', { type: 'image/png' });
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      try { await navigator.share({ files: [file], title: shop.name }); }
+      catch (e) { if (e.name !== 'AbortError') throw e; }
+      return;
+    }
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = file.name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 3000);
+    toast('الصورة اتحفظت في التنزيلات، ابعتها من واتساب');
+  } catch (e) { toast('تعذر تجهيز الصورة: ' + (e.message || e)); }
+}
+$('rcWa').onclick = () => lastSale && shareReceipt(lastSale);
+$('rcTxt').onclick = () => lastSale && window.open('https://wa.me/' + waPhone(lastSale) + '?text=' + encodeURIComponent(docText(lastSale)), '_blank');
 $('rcPrint').onclick = () => window.print();
 $('rcClose').onclick = () => $('rcModal').style.display = 'none';
 
@@ -1231,9 +1348,19 @@ $('pFile').onchange = e => {
   const f = e.target.files[0]; if (!f) return;
   compress(f, d => { imgData = d; $('prev').src = d; $('prev').style.display = 'block'; });
 };
+// حساب الدفعتين: الكمية الكلية + متوسط سعر الشراء
+function calcBatches() {
+  const p1 = parseFloat($('pP1').value) || 0, q1 = parseInt($('pQ1').value) || 0;
+  const p2 = parseFloat($('pP2').value) || 0, q2 = parseInt($('pQ2').value) || 0;
+  const q = q1 + q2;
+  const cost = q > 0 ? (p1 * q1 + p2 * q2) / q : (p1 || p2 || 0);
+  $('batchRes').textContent = (q || p1 || p2) ? 'الكمية الكلية: ' + q + ' قطعة | متوسط سعر الشراء: ' + num(cost) + ' ج.م' : '';
+  return { q, cost: num(cost) };
+}
+['pP1', 'pQ1', 'pP2', 'pQ2'].forEach(id => $(id).oninput = calcBatches);
 function resetForm() {
-  ['pId', 'pName', 'pBar', 'pCost', 'pPrice', 'pStock', 'pFile'].forEach(id => $(id).value = '');
-  imgData = ''; $('prev').style.display = 'none';
+  ['pId', 'pName', 'pBar', 'pPrice', 'pP1', 'pQ1', 'pP2', 'pQ2', 'pFile'].forEach(id => $(id).value = '');
+  imgData = ''; $('prev').style.display = 'none'; calcBatches();
   $('saveBtn').textContent = 'حفظ المنتج 💾'; $('cancelBtn').style.display = 'none';
 }
 $('cancelBtn').onclick = resetForm;
@@ -1242,11 +1369,10 @@ $('saveBtn').onclick = () => {
   if (!name || price <= 0) return toast('اكتب الاسم وسعر البيع');
   const id = $('pId').value;
   if (bar && Object.entries(products).some(([i, p]) => p.barcode === bar && i !== id)) return toast('الباركود ده مسجل لمنتج تاني');
+  const bt = calcBatches();
   const ref = id ? doc(db, 'products', id) : doc(collection(db, 'products'));
-  setDoc(ref, {
-    name, barcode: bar, price, cost: parseFloat($('pCost').value) || 0,
-    stock: parseInt($('pStock').value) || 0, img: imgData || ''
-  }, { merge: true }).catch(e => toast('تعذر الحفظ: ' + e.code));
+  setDoc(ref, { name, barcode: bar, price, cost: bt.cost, stock: bt.q, img: imgData || '' }, { merge: true })
+    .catch(e => toast('تعذر الحفظ: ' + e.code));
   resetForm(); toast('تم الحفظ ✅');
 };
 function renderStock() {
@@ -1254,7 +1380,7 @@ function renderStock() {
   $('stockList').innerHTML = show.length ? show.map(id => {
     const p = products[id];
     return `<div class="row" data-id="${id}">${imgHtml(p)}
-      <div class="info">${esc(p.name)}<small>شراء ${num(p.cost)}${p.lastCost ? ' (آخر شراء ' + num(p.lastCost) + ')' : ''} | بيع ${num(p.price)} | كمية ${p.stock ?? 0}${p.barcode ? ' | ' + esc(p.barcode) : ''}</small></div>
+      <div class="info">${esc(p.name)}<small>شراء (متوسط) ${num(p.cost)}${p.lastCost ? ' | آخر شراء ' + num(p.lastCost) : ''} | بيع ${num(p.price)} | كمية ${p.stock ?? 0}${p.barcode ? ' | ' + esc(p.barcode) : ''}</small></div>
       <button class="amber sm" data-act="edit">تعديل</button>
       <button class="red sm" data-act="del">حذف</button></div>`;
   }).join('') + (ids.length > show.length ? `<button id="moreStock" class="gray full">عرض المزيد (${ids.length - show.length})</button>` : '')
@@ -1268,8 +1394,9 @@ $('stockList').onclick = e => {
   if (b.dataset.act === 'del') {
     if (confirm('حذف ' + p.name + '؟')) deleteDoc(doc(db, 'products', id)).catch(e => toast('تعذر الحذف: ' + e.code));
   } else {
-    $('pId').value = id; $('pName').value = p.name; $('pBar').value = p.barcode || ''; $('pCost').value = p.cost;
-    $('pPrice').value = p.price; $('pStock').value = p.stock; imgData = p.img || '';
+    $('pId').value = id; $('pName').value = p.name; $('pBar').value = p.barcode || '';
+    $('pPrice').value = p.price; $('pP1').value = p.cost || ''; $('pQ1').value = p.stock ?? ''; $('pP2').value = ''; $('pQ2').value = '';
+    calcBatches(); imgData = p.img || '';
     if (imgData) { $('prev').src = imgData; $('prev').style.display = 'block'; }
     $('saveBtn').textContent = 'تحديث المنتج 🔄'; $('cancelBtn').style.display = 'block';
     scrollTo({ top: 0, behavior: 'smooth' });
@@ -1642,11 +1769,9 @@ $('invList').onclick = e => {
   bigImg(e);
 };
 $('lowList').onclick = bigImg;
-
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 </script>
 </body>
-                                                                                  </html>
+      </html>
 
 
-                                                                              
+    
