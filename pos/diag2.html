@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1"><title>فحص التطبيق</title>
+<style>
+body{font-family:sans-serif;padding:14px;line-height:1.9}
+b.ok{color:#137333}b.no{color:#c5221f}
+button{width:100%;padding:12px;font-size:16px;border:0;border-radius:8px;background:#1a73e8;color:#fff;margin-top:14px}
+pre{white-space:pre-wrap;direction:ltr;background:#f4f5f7;padding:8px;border-radius:8px;font-size:12px;word-break:break-all}
+</style></head>
+<body>
+<h2>🔍 فحص ملف التطبيق</h2>
+<div id="out">جاري الفحص...</div>
+<button id="fix">🧹 مسح كاش التطبيق وإعادة فتحه (مش بيمسح فواتيرك ولا بياناتك)</button>
+<script>
+const out = document.getElementById('out');
+const esc = s => String(s).replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
+const log = (t, ok) => out.insertAdjacentHTML('beforeend', '<div>' + (ok === undefined ? '' : ok ? '<b class="ok">✔</b> ' : '<b class="no">✘</b> ') + t + '</div>');
+(async () => {
+  out.innerHTML = '';
+  let txt = '';
+  try {
+    const r = await fetch('index.html?x=' + Date.now(), { cache: 'no-store' });
+    txt = await r.text();
+    log('اتحمّل ملف التطبيق: ' + txt.length + ' حرف', r.ok);
+  } catch (e) { log('تعذر تحميل ملف التطبيق: ' + esc(e.message), false); return; }
+  log('آخر الملف:<pre>' + esc(txt.slice(-70)) + '</pre>', /<\/html>\s*$/.test(txt));
+  const m = txt.match(/<script type="module">([\s\S]*?)<\/script>/);
+  if (!m) { log('مش لاقي كود التطبيق جوه الملف', false); return; }
+  const code = m[1].replace(/^import .*$/gm, '');
+  log('عدد أسطر الكود: ' + code.split('\n').length);
+  try {
+    new (Object.getPrototypeOf(async function () {}).constructor)('"use strict";\n' + code);
+    log('الكود سليم (مفيش أخطاء كتابة)', true);
+  } catch (e) { log('⚠️ خطأ في الكود: ' + esc(e.message), false); }
+  const ids = [...new Set([...code.matchAll(/\$\('([A-Za-z0-9_]+)'\)/g)].map(x => x[1]))];
+  const dom = new DOMParser().parseFromString(txt, 'text/html');
+  const miss = ids.filter(i => !dom.getElementById(i));
+  log('عناصر ناقصة في الصفحة: ' + (miss.length ? esc(miss.join(' , ')) : 'مفيش'), !miss.length);
+  for (const f of ['app', 'auth', 'firestore']) {
+    try { await import('https://www.gstatic.com/firebasejs/10.14.1/firebase-' + f + '.js'); log('تحميل Firebase ' + f, true); }
+    catch (e) { log('تحميل Firebase ' + f + ': ' + esc(e.message), false); }
+  }
+  try {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    log('الخدمات الخلفية: ' + regs.length + ' | الكاش: ' + esc((await caches.keys()).join(' , ') || 'فاضي'));
+  } catch (e) {}
+})();
+document.getElementById('fix').onclick = async () => {
+  try {
+    const regs = await navigator.serviceWorker.getRegistrations();
+    for (const r of regs) await r.unregister();
+    for (const k of await caches.keys()) await caches.delete(k);
+    alert('تم مسح الكاش ✅ هنفتح التطبيق دلوقتي');
+    location.href = 'index.html?v=' + Date.now();
+  } catch (e) { alert('تعذر: ' + e.message); }
+};
+</script></body></html>
+
+
