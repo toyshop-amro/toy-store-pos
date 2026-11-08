@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
@@ -36,9 +35,6 @@ button:disabled{opacity:.5}
 .on{color:#137333}.off{color:#b06000}
 .srow{display:flex;gap:6px}.srow input{flex:1;min-width:0}.srow button{white-space:nowrap}
 .dens{display:flex;gap:6px;align-items:center;font-size:12px;margin-top:8px;color:#5f6368}
-.chips{display:flex;gap:6px;overflow-x:auto;padding:8px 0 2px;margin-top:6px}
-.chip{white-space:nowrap;background:#e4e6eb;color:#333;padding:7px 14px;border-radius:18px;font-size:13px;flex-shrink:0}
-.chip.sel{background:#1a73e8;color:#fff}
 .grid{display:grid;gap:8px;margin-top:10px}
 .grid.g2{grid-template-columns:repeat(2,1fr)}
 .grid.g3{grid-template-columns:repeat(3,1fr)}
@@ -145,7 +141,6 @@ nav button.act{color:#ffe600}
       <input id="search" placeholder="🔍 ابحث بالاسم أو الباركود...">
       <button id="scanBtn" class="amber">📷 مسح</button>
     </div>
-    <div id="catBar" class="chips"></div>
     <div class="dens">حجم المنتجات:
       <button class="sm gray" data-cols="2">كبير</button>
       <button class="sm gray" data-cols="3">وسط</button>
@@ -179,9 +174,6 @@ nav button.act{color:#ffe600}
       <label>اسم اللعبة</label><input id="pName">
       <label>الباركود (اختياري)</label>
       <div class="srow"><input id="pBar" class="ltr" inputmode="numeric"><button id="pScan" class="amber">📷 مسح</button></div>
-      <label>التصنيف (اختياري)</label>
-      <input id="pCat" list="catList" placeholder="مثال: رمضان، شماسي، ألعاب">
-      <datalist id="catList"></datalist>
       <label>سعر البيع</label><input id="pPrice" type="number" inputmode="decimal">
       <h2>🧮 سعر الشراء والكمية (على دفعتين)</h2>
       <div class="two">
@@ -202,9 +194,7 @@ nav button.act{color:#ffe600}
     </div>
     <div class="box">
       <h2>المنتجات المسجلة</h2>
-      <input id="stSearch" placeholder="🔍 ابحث في المنتجات...">
-      <button id="stBulk" class="amber full">🏷️ حط تصنيف لكل المنتجات الظاهرة</button>
-      <p class="note" style="margin:8px 0 6px">اكتب في البحث (مثلًا: شمسية) واضغط الزرار اللي فوق عشان تصنّف كل النتايج مرة واحدة. اضغط على الصورة عشان تشوفها كبيرة.</p>
+      <p class="note" style="margin:0 0 6px">اضغط على الصورة عشان تشوفها كبيرة.</p>
       <div id="stockList"></div>
     </div>
   </div>
@@ -245,8 +235,6 @@ nav button.act{color:#ffe600}
       <input id="eTitle">
       <label>المبلغ (ج.م)</label>
       <input id="eAmt" type="number" inputmode="decimal">
-      <label>التاريخ (تقدر تختار تاريخ قديم لو نسيت تسجله)</label>
-      <input id="eDate" type="date">
       <button id="expBtn" class="red full">تسجيل المصروف 📝</button>
     </div>
     <div class="box">
@@ -306,8 +294,6 @@ nav button.act{color:#ffe600}
           <div><label>من</label><input type="date" id="rFrom"></div>
           <div><label>إلى</label><input type="date" id="rTo"></div>
         </div>
-        <label>الموظف</label>
-        <select id="rEmp" style="margin-bottom:10px"><option value="">كل الموظفين</option></select>
         <div class="cards">
           <div class="cd">عدد الفواتير<b class="bl" id="rCount">0</b></div>
           <div class="cd">صافي المبيعات (بعد المرتجع)<b id="rSales">0 ج.م</b></div>
@@ -318,12 +304,10 @@ nav button.act{color:#ffe600}
         <h2 id="brkTitle">📅 مبيعات كل يوم</h2>
         <div id="brkList"></div>
         <h2>مبيعات كل موظف</h2>
-        <p class="note" style="margin:0 0 4px">اضغط على اسم الموظف عشان تشوف فواتيره هو بس.</p>
         <div id="empRep"></div>
         <h2>الأكثر مبيعًا</h2>
         <div id="topList"></div>
         <h2>الفواتير</h2>
-        <input id="rSearch" placeholder="🔍 رقم الفاتورة أو اسم العميل">
         <div id="salesList"></div>
       </div>
     </div>
@@ -377,7 +361,7 @@ nav button.act{color:#ffe600}
       <label>العنوان</label><input id="sAddr">
       <label>التليفون</label><input id="sPhone" class="ltr" inputmode="tel">
       <button id="shopBtn" class="green full">حفظ بيانات المحل</button>
-      <h2>🔑 كلمة سر المدير</h2>
+      <h2>تغيير كلمة سر المدير</h2>
       <label>كلمة السر الحالية</label>
       <input id="cPin" type="password" inputmode="numeric">
       <label>كلمة السر الجديدة</label>
@@ -386,8 +370,6 @@ nav button.act{color:#ffe600}
       <input id="nPin2" type="password" inputmode="numeric">
       <button id="chgBtn" class="full">حفظ كلمة السر الجديدة 🔑</button>
       <button id="lockBtn" class="gray full">🔒 قفل الآن</button>
-      <button id="pinToggle" class="amber full"></button>
-      <p class="note">إيقاف كلمة السر معناه إن الصفحات (المنتجات والتقارير والإعدادات...) تفتح من غير كلمة سر لما تدخل بحساب المدير. وتقدر ترجّعها في أي وقت.</p>
     </div>
     <div class="box">
       <h2>⚡ تسريع التطبيق والمزامنة</h2>
@@ -543,25 +525,22 @@ const fmtT = ts => new Date(ts).toLocaleTimeString('ar-EG', { hour: '2-digit', m
 const latin = s => s.replace(/[٠-٩]/g, d => '٠١٢٣٤٥٦٧٨٩'.indexOf(d));
 const invNo = ts => String(Math.floor(ts / 1000) % 1000000).padStart(6, '0');
 const deb = (f, ms = 180) => { let t; return () => { clearTimeout(t); t = setTimeout(f, ms); }; };
-const ymd = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-const sinceTs = () => new Date(new Date().getFullYear() - 1, 0, 1).getTime(); // آخر سنتين بس
 let products = {}, sales = [], expenses = [], employees = [], suppliers = [], purchases = [], cart = [], imgData = '', unsubs = [], per = 'day';
 let imgs = {}, imgNew = false, lastSync = 0, pendingW = false;
 const legacy = new Set(); // منتجات صورتها لسه جوه بيانات المنتج (قبل النقل)
-let adminHash = null, pinStatus = 'loading', unlocked = false, pending = null, isAdmin = false, lockOff = false;
+let adminHash = null, pinStatus = 'loading', unlocked = false, pending = null, isAdmin = false;
 let scanStream = null, scanTimer = null, scanTarget = 'cart', lastCode = '', lastAt = 0, lastSale = null, shareMsg = '', sharePhone = '';
 let ovMode = 'sales', ovPer = 'day';
 let shop = { name: 'محل الألعاب', addr: '', phone: '' }, myName = 'المدير', rt = [], rtRef = '', pur = [];
 let cols = +localStorage.getItem('gc') || 3;
-let catSel = localStorage.getItem('cat') || '', empFilter = '';
 let gridLimit = 60, stockLimit = 40, invLimit = 60;
 
 /* ---------- رسم التبويب المفتوح بس (عشان التطبيق يخف) ---------- */
 const dirty = new Set();
 let curTab = 'pos', ft;
 const R = {
-  pos: () => { renderCats(); renderGrid(); renderCart(); },
-  stock: () => { renderCats(); renderStock(); },
+  pos: () => { renderGrid(); renderCart(); },
+  stock: () => renderStock(),
   pur: () => { renderSup(); renderPurRes(); renderPurHist(); },
   exp: () => renderExp(),
   rep: () => { renderReports(); renderInv(); },
@@ -704,7 +683,7 @@ onAuthStateChanged(auth, user => {
   unsubs.forEach(f => f()); unsubs = [];
   stopScan(); dirty.clear();
   ['rcModal', 'rtModal', 'ivModal', 'pinModal', 'shModal', 'imgModal'].forEach(id => $(id).style.display = 'none');
-  unlocked = false; adminHash = null; pinStatus = 'loading'; lockOff = false; empFilter = '';
+  unlocked = false; adminHash = null; pinStatus = 'loading';
   isAdmin = !!user && user.email === ADMIN_EMAIL;
   if (!user) {
     products = {}; imgs = {}; legacy.clear(); lastSync = 0; pendingW = false;
@@ -716,7 +695,7 @@ onAuthStateChanged(auth, user => {
   $('nav').style.display = isAdmin ? 'flex' : 'none';
   $('rtInv').style.display = isAdmin ? '' : 'none';
   tab('pos');
-  renderFailed(); checkBackup(); verifyOutbox(); renderLockBtn();
+  renderFailed(); checkBackup(); verifyOutbox();
   const onErr = e => {
     if (e.code === 'permission-denied' && !isAdmin) { toast('حسابك موقوف أو غير مسجل. كلّم المدير (فواتيرك محفوظة)'); signOut(auth); }
     else toast('خطأ في التحميل: ' + e.code);
@@ -737,7 +716,7 @@ onAuthStateChanged(auth, user => {
       if (d.img) legacy.add(id); else legacy.delete(id);
       const img = imgs[id] || d.img || '';
       const nd = { ...d, img };
-      if (!old || old.name !== nd.name || old.price !== nd.price || old.barcode !== nd.barcode || (old.cat || '') !== (nd.cat || '') || (old.img || '') !== img) structural = true;
+      if (!old || old.name !== nd.name || old.price !== nd.price || old.barcode !== nd.barcode || (old.img || '') !== img) structural = true;
       else stockIds.push(id);
       products[id] = nd;
     });
@@ -762,7 +741,7 @@ onAuthStateChanged(auth, user => {
   }, () => {}));
 
   if (isAdmin) {
-    const since = sinceTs();
+    const since = new Date(new Date().getFullYear() - 1, 0, 1).getTime(); // آخر سنتين بس
     unsubs.push(onSnapshot(query(collection(db, 'sales'), where('ts', '>=', since)), snap => {
       sales = []; snap.forEach(d => sales.push({ id: d.id, ...d.data() })); mark('rep');
     }, onErr));
@@ -779,9 +758,8 @@ onAuthStateChanged(auth, user => {
       purchases = []; snap.forEach(d => purchases.push({ id: d.id, ...d.data() })); mark('pur');
     }, onErr));
     unsubs.push(onSnapshot(doc(db, 'settings', 'admin'), snap => {
-      if (snap.exists()) { adminHash = snap.data().pin || null; pinStatus = adminHash ? 'set' : 'none'; lockOff = !!snap.data().off; }
-      else if (!snap.metadata.fromCache) { adminHash = null; pinStatus = 'none'; lockOff = false; }
-      renderLockBtn();
+      if (snap.exists()) { adminHash = snap.data().pin; pinStatus = 'set'; }
+      else if (!snap.metadata.fromCache) { adminHash = null; pinStatus = 'none'; }
     }, onErr));
   } else {
     unsubs.push(onSnapshot(doc(db, 'employees', user.uid), snap => {
@@ -800,7 +778,7 @@ const TABS = {
 };
 function tab(name) {
   if (name !== 'pos' && !isAdmin) return;
-  if (name !== 'pos' && !unlocked && !lockOff) { openPin(name); return; }
+  if (name !== 'pos' && !unlocked) { openPin(name); return; }
   if (name === 'pos') unlocked = false; // الرجوع للكاشير بيقفل تاني
   curTab = name;
   Object.entries(TABS).forEach(([k, [s, b]]) => {
@@ -830,7 +808,7 @@ $('pinOk').onclick = async () => {
   if (pinStatus === 'none') {
     if (p !== $('pin2').value) return pinErr('الكلمتين مش متطابقتين');
     const h = await sha(p);
-    setDoc(doc(db, 'settings', 'admin'), { pin: h }, { merge: true }).catch(e => toast('تعذر الحفظ: ' + e.code));
+    setDoc(doc(db, 'settings', 'admin'), { pin: h }).catch(e => toast('تعذر الحفظ: ' + e.code));
     adminHash = h; pinStatus = 'set';
   } else if (await sha(p) !== adminHash) return pinErr('كلمة السر غلط');
   unlocked = true;
@@ -851,33 +829,12 @@ $('chgBtn').onclick = async () => {
   if (n.length < 4) return toast('الجديدة لازم 4 على الأقل');
   if (n !== $('nPin2').value) return toast('الكلمتين الجداد مش متطابقتين');
   const h = await sha(n);
-  setDoc(doc(db, 'settings', 'admin'), { pin: h }, { merge: true }).catch(e => toast('تعذر الحفظ: ' + e.code));
+  setDoc(doc(db, 'settings', 'admin'), { pin: h }).catch(e => toast('تعذر الحفظ: ' + e.code));
   adminHash = h;
   ['cPin', 'nPin1', 'nPin2'].forEach(id => $(id).value = '');
   toast('تم تغيير كلمة السر ✅');
 };
 $('lockBtn').onclick = () => { unlocked = false; tab('pos'); };
-
-// تشغيل / إيقاف كلمة السر
-function renderLockBtn() {
-  $('pinToggle').textContent = lockOff ? '🔒 تشغيل كلمة السر' : '🔓 إيقاف كلمة السر';
-  $('lockBtn').style.display = lockOff ? 'none' : '';
-}
-$('pinToggle').onclick = async () => {
-  if (lockOff) { // تشغيل
-    setDoc(doc(db, 'settings', 'admin'), { off: false }, { merge: true }).catch(e => toast('تعذر الحفظ: ' + e.code));
-    lockOff = false; renderLockBtn(); toast('تم تشغيل كلمة السر ✅');
-    if (pinStatus !== 'set') { unlocked = false; openPin('set'); }
-  } else { // إيقاف
-    if (pinStatus !== 'set') return toast('لسه ما عملتش كلمة سر. افتح أي صفحة وهتطلب منك تعمل واحدة');
-    const p = prompt('اكتب كلمة سر المدير الحالية عشان توقفها');
-    if (p === null) return;
-    if (await sha(p) !== adminHash) return toast('كلمة السر غلط');
-    if (!confirm('لو وقفت كلمة السر، أي حد يفتح التطبيق بحساب المدير هيدخل كل الصفحات من غير كلمة سر. نكمل؟')) return;
-    setDoc(doc(db, 'settings', 'admin'), { off: true }, { merge: true }).catch(e => toast('تعذر الحفظ: ' + e.code));
-    lockOff = true; renderLockBtn(); toast('تم إيقاف كلمة السر');
-  }
-};
 
 /* ---------- نقل وتصغير الصور ---------- */
 function shrinkImg(src) {
@@ -931,8 +888,8 @@ function backupAll() {
   checkBackup();
 }
 $('xProd').onclick = () => {
-  download('المنتجات-' + today() + '.csv', csv([['الاسم', 'التصنيف', 'الباركود', 'سعر الشراء (متوسط)', 'آخر سعر شراء', 'سعر البيع', 'الكمية'],
-    ...Object.values(products).map(p => [p.name, p.cat || '', p.barcode, p.cost, p.lastCost || '', p.price, p.stock])]), 'text/csv');
+  download('المنتجات-' + today() + '.csv', csv([['الاسم', 'الباركود', 'سعر الشراء (متوسط)', 'آخر سعر شراء', 'سعر البيع', 'الكمية'],
+    ...Object.values(products).map(p => [p.name, p.barcode, p.cost, p.lastCost || '', p.price, p.stock])]), 'text/csv');
 };
 $('xSales').onclick = () => {
   download('المبيعات-' + today() + '.csv', csv([['رقم الفاتورة', 'النوع', 'التاريخ', 'الموظف', 'العميل', 'الأصناف', 'الإجمالي', 'المدفوع', 'المتبقي', 'الربح'],
@@ -1024,31 +981,10 @@ function setCols(n) {
 document.querySelectorAll('.dens button').forEach(b => b.onclick = () => setCols(+b.dataset.cols));
 setCols(cols);
 
-// التصنيفات
-const catOf = p => (p.cat || '').trim();
-const catList = () => [...new Set(Object.values(products).map(catOf).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'ar'));
-function renderCats() {
-  const cs = catList(), none = Object.values(products).some(p => !catOf(p));
-  if (catSel && catSel !== '__none' && !cs.includes(catSel)) catSel = '';
-  if (catSel === '__none' && !(cs.length && none)) catSel = '';
-  const chip = (v, t) => `<button class="chip${catSel === v ? ' sel' : ''}" data-c="${esc(v)}">${esc(t)}</button>`;
-  $('catBar').innerHTML = cs.length ? chip('', 'الكل') + cs.map(c => chip(c, c)).join('') + (none ? chip('__none', 'غير مصنف') : '') : '';
-  $('catList').innerHTML = cs.map(c => `<option value="${esc(c)}">`).join('');
-}
-$('catBar').onclick = e => {
-  const b = e.target.closest('[data-c]'); if (!b) return;
-  catSel = b.dataset.c;
-  try { localStorage.setItem('cat', catSel); } catch (x) {}
-  gridLimit = 60; renderCats(); renderGrid();
-};
-
 function renderGrid() {
   const q = $('search').value.trim().toLowerCase();
-  const ids = Object.keys(products).filter(id => {
-    const p = products[id];
-    if (q) return (p.name || '').toLowerCase().includes(q) || (p.barcode || '').includes(q); // البحث في كل التصنيفات
-    return !catSel || (catSel === '__none' ? !catOf(p) : catOf(p) === catSel);
-  });
+  const ids = Object.keys(products).filter(id => !q ||
+    (products[id].name || '').toLowerCase().includes(q) || (products[id].barcode || '').includes(q));
   const show = ids.slice(0, gridLimit);
   $('grid').innerHTML = show.length ? show.map(id => {
     const p = products[id];
@@ -1471,7 +1407,7 @@ function calcBatches() {
 }
 ['pP1', 'pQ1', 'pP2', 'pQ2'].forEach(id => $(id).oninput = calcBatches);
 function resetForm() {
-  ['pId', 'pName', 'pBar', 'pCat', 'pPrice', 'pP1', 'pQ1', 'pP2', 'pQ2', 'pFile'].forEach(id => $(id).value = '');
+  ['pId', 'pName', 'pBar', 'pPrice', 'pP1', 'pQ1', 'pP2', 'pQ2', 'pFile'].forEach(id => $(id).value = '');
   imgData = ''; imgNew = false; $('prev').style.display = 'none'; calcBatches();
   $('saveBtn').textContent = 'حفظ المنتج 💾'; $('cancelBtn').style.display = 'none';
 }
@@ -1483,43 +1419,23 @@ $('saveBtn').onclick = () => {
   if (bar && Object.entries(products).some(([i, p]) => p.barcode === bar && i !== id)) return toast('الباركود ده مسجل لمنتج تاني');
   const bt = calcBatches();
   const ref = id ? doc(db, 'products', id) : doc(collection(db, 'products'));
-  setDoc(ref, { name, barcode: bar, cat: $('pCat').value.trim(), price, cost: bt.cost, stock: bt.q }, { merge: true })
+  setDoc(ref, { name, barcode: bar, price, cost: bt.cost, stock: bt.q }, { merge: true })
     .catch(e => toast('تعذر الحفظ: ' + e.code));
   if (imgNew && imgData) setDoc(doc(db, 'productImages', ref.id), { img: imgData })
     .catch(e => toast('تعذر حفظ الصورة: ' + e.code + ' (اتأكد إنك نشرت القواعد الجديدة)'));
   resetForm(); toast('تم الحفظ ✅');
 };
-function stockIds() {
-  const q = $('stSearch').value.trim().toLowerCase();
-  return Object.keys(products).filter(id => !q || (products[id].name || '').toLowerCase().includes(q) || (products[id].barcode || '').includes(q));
-}
 function renderStock() {
-  const ids = stockIds(), show = ids.slice(0, stockLimit);
+  const ids = Object.keys(products), show = ids.slice(0, stockLimit);
   $('stockList').innerHTML = show.length ? show.map(id => {
     const p = products[id];
     return `<div class="row" data-id="${id}">${imgHtml(p)}
-      <div class="info">${esc(p.name)}<small>شراء (متوسط) ${num(p.cost)}${p.lastCost ? ' | آخر شراء ' + num(p.lastCost) : ''} | بيع ${num(p.price)} | كمية ${p.stock ?? 0}${catOf(p) ? ' | 🏷️ ' + esc(catOf(p)) : ''}${p.barcode ? ' | ' + esc(p.barcode) : ''}</small></div>
+      <div class="info">${esc(p.name)}<small>شراء (متوسط) ${num(p.cost)}${p.lastCost ? ' | آخر شراء ' + num(p.lastCost) : ''} | بيع ${num(p.price)} | كمية ${p.stock ?? 0}${p.barcode ? ' | ' + esc(p.barcode) : ''}</small></div>
       <button class="amber sm" data-act="edit">تعديل</button>
-      <button class="gray sm" data-act="cat">🏷️</button>
       <button class="red sm" data-act="del">حذف</button></div>`;
   }).join('') + (ids.length > show.length ? `<button id="moreStock" class="gray full">عرض المزيد (${ids.length - show.length})</button>` : '')
-    : '<p class="mut">لا توجد منتجات</p>';
+    : '<p class="mut">لا توجد منتجات بعد</p>';
 }
-$('stSearch').oninput = deb(() => { stockLimit = 40; renderStock(); });
-$('stBulk').onclick = () => {
-  const ids = stockIds();
-  if (!ids.length) return toast('مفيش منتجات ظاهرة');
-  const cur = catList().join('، ');
-  const c = prompt('اكتب اسم التصنيف لـ ' + ids.length + ' منتج ظاهر' + (cur ? '\n(الموجود: ' + cur + ')' : '') + '\nسيبه فاضي لو عايز تشيل التصنيف:');
-  if (c === null) return;
-  const cat = c.trim();
-  for (let i = 0; i < ids.length; i += 400) {
-    const b = writeBatch(db);
-    ids.slice(i, i + 400).forEach(id => b.update(doc(db, 'products', id), { cat }));
-    b.commit().catch(e => toast('تعذر الحفظ: ' + e.code));
-  }
-  toast('تم تصنيف ' + ids.length + ' منتج ✅');
-};
 $('stockList').onclick = e => {
   if (e.target.id === 'moreStock') { stockLimit += 40; renderStock(); return; }
   if (bigImg(e)) return;
@@ -1530,13 +1446,8 @@ $('stockList').onclick = e => {
       deleteDoc(doc(db, 'products', id)).catch(e => toast('تعذر الحذف: ' + e.code));
       if (imgs[id]) deleteDoc(doc(db, 'productImages', id)).catch(() => {});
     }
-  } else if (b.dataset.act === 'cat') {
-    const cur = catList().join('، ');
-    const c = prompt('تصنيف ' + p.name + (cur ? '\n(الموجود: ' + cur + ')' : '') + ':', catOf(p));
-    if (c === null) return;
-    updateDoc(doc(db, 'products', id), { cat: c.trim() }).catch(e => toast('تعذر الحفظ: ' + e.code));
   } else {
-    $('pId').value = id; $('pName').value = p.name; $('pBar').value = p.barcode || ''; $('pCat').value = catOf(p);
+    $('pId').value = id; $('pName').value = p.name; $('pBar').value = p.barcode || '';
     $('pPrice').value = p.price; $('pP1').value = p.cost || ''; $('pQ1').value = p.stock ?? ''; $('pP2').value = ''; $('pQ2').value = '';
     calcBatches(); imgData = p.img || ''; imgNew = false;
     if (imgData) { $('prev').src = imgData; $('prev').style.display = 'block'; }
@@ -1667,16 +1578,12 @@ $('purHist').onclick = e => {
 };
 
 /* ---------- المصاريف ---------- */
-$('eDate').value = ymd(new Date());
 $('expBtn').onclick = () => {
-  const title = $('eTitle').value.trim(), amount = parseFloat($('eAmt').value) || 0, dv = $('eDate').value;
+  const title = $('eTitle').value.trim(), amount = parseFloat($('eAmt').value) || 0;
   if (!title || amount <= 0) return toast('اكتب البند والمبلغ');
-  if (!dv) return toast('اختار التاريخ');
-  const ts = dv === ymd(new Date()) ? Date.now() : new Date(dv + 'T12:00:00').getTime();
-  if (ts < sinceTs()) return toast('التاريخ ده أقدم من سنتين، مش هيظهر في التقارير. اختار تاريخ أحدث');
-  setDoc(doc(collection(db, 'expenses')), { title, amount, user: auth.currentUser.email, ts })
+  setDoc(doc(collection(db, 'expenses')), { title, amount, user: auth.currentUser.email, ts: Date.now() })
     .catch(e => toast('تعذر الحفظ: ' + e.code));
-  $('eTitle').value = ''; $('eAmt').value = ''; $('eDate').value = ymd(new Date());
+  $('eTitle').value = ''; $('eAmt').value = '';
   toast('تم تسجيل المصروف ✅');
 };
 function renderExp() {
@@ -1684,7 +1591,7 @@ function renderExp() {
   const sod = startOfDay();
   $('eToday').textContent = num(list.filter(e => e.ts >= sod).reduce((a, e) => a + e.amount, 0)) + ' ج.م';
   $('expList').innerHTML = list.length ? list.slice(0, 50).map(e =>
-    `<div class="row" data-id="${e.id}"><div class="info">${esc(e.title)}<small>${fmtD(e.ts)}</small></div>
+    `<div class="row" data-id="${e.id}"><div class="info">${esc(e.title)}<small>${fmt(e.ts)}</small></div>
       <b style="color:#c5221f">${num(e.amount)} ج.م</b><button class="red sm" data-act="del">حذف</button></div>`).join('')
     : '<p class="mut">لا توجد مصروفات</p>';
 }
@@ -1729,18 +1636,12 @@ function renderEmp() {
   $('empList').innerHTML = employees.length ? employees.map(e =>
     `<div class="row" data-id="${e.id}"><div class="info">${esc(e.name)}
       <small>${esc((e.email || '').split('@')[0])} — ${e.active ? '✅ شغال' : '⛔ موقوف'}</small></div>
-      <button class="amber sm" data-act="inv">🧾 فواتيره</button>
       <button class="${e.active ? 'red' : 'green'} sm" data-act="tog">${e.active ? 'إيقاف' : 'تفعيل'}</button></div>`).join('')
     : '<p class="mut">لا يوجد موظفين بعد</p>';
 }
 $('empList').onclick = e => {
   const b = e.target.closest('[data-act]'); if (!b) return;
   const id = b.closest('[data-id]').dataset.id, emp = employees.find(x => x.id === id);
-  if (b.dataset.act === 'inv') { // فواتير الموظف ده بس
-    empFilter = emp.email; $('rSearch').value = '';
-    setView('sales'); setPer('month'); tab('rep');
-    return;
-  }
   if (emp.active && !confirm('إيقاف ' + emp.name + '؟ مش هيقدر يدخل ولا يبيع لحد ما تفعّله تاني.')) return;
   updateDoc(doc(db, 'employees', id), { active: !emp.active }).catch(e => toast('تعذر التعديل: ' + e.code));
 };
@@ -1807,21 +1708,13 @@ function renderOverview() {
 }
 
 const PM = { day: 'pDay', week: 'pWeek', month: 'pMonth', year: 'pYear', range: 'pRange' };
-function setPer(k) {
+Object.entries(PM).forEach(([k, id]) => $(id).onclick = () => {
   per = k;
   Object.entries(PM).forEach(([k2, id2]) => $(id2).className = k2 === k ? 'sel' : '');
   $('rangeBox').style.display = k === 'range' ? 'grid' : 'none';
   renderReports();
-}
-Object.entries(PM).forEach(([k, id]) => $(id).onclick = () => setPer(k));
+});
 $('rFrom').onchange = $('rTo').onchange = () => renderReports();
-$('rEmp').onchange = () => { empFilter = $('rEmp').value; renderReports(); };
-$('rSearch').oninput = deb(() => renderReports());
-$('empRep').onclick = e => {
-  const r = e.target.closest('[data-u]'); if (!r) return;
-  empFilter = r.dataset.u; renderReports();
-  $('salesList').scrollIntoView({ behavior: 'smooth' });
-};
 function periodRange() {
   const now = new Date(), y = now.getFullYear(), m = now.getMonth(), end = Date.now() + 1;
   if (per === 'day') return [startOfDay(), end];
@@ -1835,15 +1728,8 @@ function periodRange() {
 function renderReports() {
   if (!isAdmin) return;
   renderOverview();
-  // قايمة الموظفين للفلتر
-  const sel = $('rEmp');
-  sel.innerHTML = '<option value="">كل الموظفين</option>' +
-    [ADMIN_EMAIL, ...employees.map(e => e.email)].map(u => `<option value="${esc(u)}">${esc(nameOf(u))}</option>`).join('');
-  sel.value = empFilter;
-  if (sel.value !== empFilter) { empFilter = ''; sel.value = ''; }
-
   const [from, to] = periodRange();
-  const all = sales.filter(s => s.ts >= from && s.ts < to && (!empFilter || s.user === empFilter)).sort((a, b) => b.ts - a.ts);
+  const all = sales.filter(s => s.ts >= from && s.ts < to).sort((a, b) => b.ts - a.ts);
   const list = all.filter(s => !s.returned);
   let tot = 0, pro = 0, cnt = 0; const top = {}, by = {}, grp = {};
   list.forEach(s => {
@@ -1878,7 +1764,7 @@ function renderReports() {
 
   const emps = Object.entries(by).sort((a, b) => b[1].v - a[1].v);
   $('empRep').innerHTML = emps.length ? emps.map(([u, t]) =>
-    `<div class="row" data-u="${esc(u)}" style="cursor:pointer"><div class="info">${esc(nameOf(u))}<small>${t.n} فاتورة</small></div><b style="color:#137333">${num(t.v)} ج.م</b></div>`).join('')
+    `<div class="row"><div class="info">${esc(nameOf(u))}<small>${t.n} فاتورة</small></div><b style="color:#137333">${num(t.v)} ج.م</b></div>`).join('')
     : '<p class="mut">لا توجد مبيعات في الفترة دي</p>';
 
   const tops = Object.entries(top).filter(([, t]) => t.q > 0).sort((a, b) => b[1].q - a[1].q).slice(0, 5);
@@ -1886,7 +1772,62 @@ function renderReports() {
     `<div class="row"><div class="info">${esc(n)}<small>${t.q} قطعة | ${num(t.v)} ج.م</small></div></div>`).join('')
     : '<p class="mut">لا توجد مبيعات في الفترة دي</p>';
 
-  const qS = latin($('rSearch').value.t
+  $('salesList').innerHTML = all.length ? all.slice(0, 100).map(s => {
+    const q = (s.items || []).reduce((a, i) => a + Math.abs(i.qty), 0), c = s.cust || {};
+    const isRet = s.type === 'return', neg = (s.total || 0) < 0;
+    return `<div class="row ${s.returned ? 'ret' : ''}" data-id="${s.id}">
+      <div class="info">${fmt(s.ts)}${isRet ? ' <span class="tag">↩️ مرتجع</span>' : ''}${s.mode === 'w' ? ' <span class="tag b">جملة</span>' : ''}${s.returned ? ' <span class="tag">ملغاة</span>' : ''}
+        <small>#${esc(s.no || '-')} | ${q} قطعة | ${esc(nameOf(s.user))}${c.name ? ' | ' + esc(c.name) : ''}${s.due > 0 ? ' | متبقي ' + num(s.due) : ''}</small></div>
+      <div style="text-align:left"><b style="color:${neg ? '#c5221f' : '#137333'}">${num(s.total)} ج.م</b><small style="display:block;color:#1a73e8">ربح ${num(s.profit)}</small></div>
+      <button class="green sm" data-act="view">🧾</button></div>`;
+  }).join('') : '<p class="mut">لا توجد فواتير</p>';
+}
+$('salesList').onclick = e => {
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const s = sales.find(x => x.id === b.closest('[data-id]').dataset.id);
+  if (s) showReceipt(s, s.type === 'return' ? '↩️ فاتورة مرتجع' : '🧾 الفاتورة');
+};
+
+function renderInv() {
+  if (!isAdmin) return;
+  const all = Object.entries(products).map(([id, p]) => ({ id, ...p }));
+  let q = 0, c = 0, v = 0, out = 0;
+  all.forEach(p => { const s = p.stock || 0; q += s; c += s * (p.cost || 0); v += s * (p.price || 0); if (s <= 0) out++; });
+  $('iKinds').textContent = all.length;
+  $('iQty').textContent = q;
+  $('iCost').textContent = num(c) + ' ج.م';
+  $('iVal').textContent = num(v) + ' ج.م';
+  $('iProfit').textContent = num(v - c) + ' ج.م';
+  $('iOut').textContent = out;
+
+  const low = all.filter(p => (p.stock || 0) <= 5).sort((a, b) => (a.stock || 0) - (b.stock || 0)).slice(0, 40);
+  $('lowList').innerHTML = low.length ? low.map(p =>
+    `<div class="row">${imgHtml(p)}<div class="info">${esc(p.name)}<small style="color:#c5221f">المتبقي: ${p.stock || 0}</small></div></div>`).join('')
+    : '<p class="mut">كل المنتجات كميتها كويسة ✅</p>';
+
+  const t = $('invSearch').value.trim().toLowerCase();
+  const list = all.filter(p => !t || (p.name || '').toLowerCase().includes(t) || (p.barcode || '') === t)
+    .sort((a, b) => (a.name || '').localeCompare(b.name || '', 'ar'));
+  const show = list.slice(0, invLimit);
+  $('invList').innerHTML = show.length ? show.map(p =>
+    `<div class="row">${imgHtml(p)}<div class="info">${esc(p.name)}
+      <small>كمية ${p.stock || 0} | تكلفة ${num(p.cost)} | بيع ${num(p.price)}</small></div>
+      <div style="text-align:left;font-size:12px;color:#5f6368">قيمة المخزون<b style="display:block;color:#b06000">${num((p.stock || 0) * (p.cost || 0))} ج.م</b></div></div>`).join('')
+    + (list.length > show.length ? `<button id="moreInv" class="gray full">عرض المزيد (${list.length - show.length})</button>` : '')
+    : '<p class="mut">لا توجد أصناف</p>';
+}
+$('invSearch').oninput = deb(() => { invLimit = 60; renderInv(); });
+$('invList').onclick = e => {
+  if (e.target.id === 'moreInv') { invLimit += 60; renderInv(); return; }
+  bigImg(e);
+};
+$('lowList').onclick = bigImg;
+</script>
+</body>
+  </html>
+
+
+
 
 
 
